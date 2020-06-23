@@ -43,6 +43,3 @@ Start the connector with debugging enabled. This will wait for a debugger to att
 export SUSPEND='y'
 ./bin/debug.sh
 ```
-=======
-# kafka-connect-datadog-logs
-A plugin for Kafka Connect to send Kafka records as logs to Datadog.
