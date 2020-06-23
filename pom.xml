@@ -1,0 +1,69 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.datadoghq</groupId>
+    <artifactId>kafka-connect-datadog-logs</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>kafka-connect-datadog-logs</name>
+    <description>A Kafka Connect Connector for kafka-connect-logs</description>
+
+    <parent>
+        <groupId>com.github.jcustenborder.kafka.connect</groupId>
+        <artifactId>kafka-connect-parent</artifactId>
+        <version>2.4.0</version>
+    </parent>
+
+    <scm>
+        <connection></connection>
+        <developerConnection></developerConnection>
+        <url></url>
+    </scm>
+    <issueManagement>
+        <system></system>
+        <url></url>
+    </issueManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+<!--
+Uncomment this second to generate a package to deploy to the Confluent Hub.
+            <plugin>
+                <groupId>io.confluent</groupId>
+                <artifactId>kafka-connect-maven-plugin</artifactId>
+                <configuration>
+                    <confluentControlCenterIntegration>true</confluentControlCenterIntegration>
+                    <documentationUrl>https://jcustenborder.github.io/kafka-connect-documentation/</documentationUrl>
+                    <componentTypes>
+                        <componentType>source</componentType>
+                        <componentType>sink</componentType>
+                        <componentType>transform</componentType>
+                        <componentType>converter</componentType>
+                    </componentTypes>
+                    <tags>
+                        <tag>kafka-connect-logs</tag>
+                    </tags>
+                    <title>Kafka Connect kafka-connect-logs</title>
+                    <supportUrl>${pom.issueManagement.url}</supportUrl>
+                    <supportSummary>Support provided through community involvement.</supportSummary>
+                    <excludes>
+                        <exclude>org.reflections:reflections</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+-->
+        </plugins>
+    </build>
+
+
+</project>
