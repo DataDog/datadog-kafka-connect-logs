@@ -5,7 +5,6 @@ import java.util.Map;
 
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;
-import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.sink.SinkConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +14,6 @@ import com.github.jcustenborder.kafka.connect.utils.config.Description;
 import com.github.jcustenborder.kafka.connect.utils.config.DocumentationImportant;
 import com.github.jcustenborder.kafka.connect.utils.config.DocumentationNote;
 import com.github.jcustenborder.kafka.connect.utils.config.DocumentationTip;
-import com.github.jcustenborder.kafka.connect.utils.config.TaskConfigs;
 import com.github.jcustenborder.kafka.connect.utils.config.Title;
 
 /**
@@ -27,13 +25,13 @@ import com.github.jcustenborder.kafka.connect.utils.config.Title;
 @DocumentationTip("This is a tip that will show up in the documentation.")
 @Title("Super Sink Connector") //This is the display name that will show up in the documentation.
 @DocumentationNote("This is a note that will show up in the documentation")
-public class MySinkConnector extends SinkConnector {
+public class DatadogSinkConnector extends SinkConnector {
   /*
   Your connector should never use System.out for logging. All of your classes should use slf4j
   for logging
    */
-  private static Logger log = LoggerFactory.getLogger(MySinkConnector.class);
-  private MySinkConnectorConfig config;
+  private static Logger log = LoggerFactory.getLogger(DatadogSinkConnector.class);
+  private DatadogSinkConnectorConfig config;
 
   @Override
   public List<Map<String, String>> taskConfigs(int maxTasks) {
@@ -50,7 +48,7 @@ public class MySinkConnector extends SinkConnector {
 
   @Override
   public void start(Map<String, String> settings) {
-    config = new MySinkConnectorConfig(settings);
+    config = new DatadogSinkConnectorConfig(settings);
 
     //TODO: Add things you need to do to setup your connector.
 
@@ -73,13 +71,13 @@ public class MySinkConnector extends SinkConnector {
 
   @Override
   public ConfigDef config() {
-    return MySinkConnectorConfig.config();
+    return DatadogSinkConnectorConfig.config();
   }
 
   @Override
   public Class<? extends Task> taskClass() {
     //TODO: Return your task implementation.
-    return MySinkTask.class;
+    return DatadogSinkTask.class;
   }
 
   @Override

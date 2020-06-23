@@ -9,14 +9,14 @@ import com.github.jcustenborder.kafka.connect.utils.config.ConfigKeyBuilder;
 import java.util.Map;
 
 
-public class MyKeyValueTransformationConfig extends AbstractConfig {
+public class DatadogSinkConnectorConfig extends AbstractConfig {
 
   public static final String MY_SETTING_CONFIG = "my.setting";
   private static final String MY_SETTING_DOC = "This is a setting important to my connector.";
 
   public final String mySetting;
 
-  public MyKeyValueTransformationConfig(Map<?, ?> originals) {
+  public DatadogSinkConnectorConfig(Map<?, ?> originals) {
     super(config(), originals);
     this.mySetting = this.getString(MY_SETTING_CONFIG);
   }

@@ -1,10 +1,8 @@
 package com.datadoghq;
 
-import org.apache.kafka.common.header.Header;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaAndValue;
 import org.apache.kafka.connect.storage.Converter;
-import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
 import java.util.Map;
 import com.github.jcustenborder.kafka.connect.utils.config.Description;
@@ -20,8 +18,8 @@ import org.slf4j.LoggerFactory;
 @DocumentationTip("This is a tip that will show up in the documentation.")
 @Title("Super Converter") //This is the display name that will show up in the documentation.
 @DocumentationNote("This is a note that will show up in the documentation")
-public class MyConverter implements Converter {
-  private static Logger log = LoggerFactory.getLogger(MyConverter.class);
+public class DatadogConverter implements Converter {
+  private static Logger log = LoggerFactory.getLogger(DatadogConverter.class);
 
   @Override
   public void configure(Map<String, ?> settings, boolean isKey) {
