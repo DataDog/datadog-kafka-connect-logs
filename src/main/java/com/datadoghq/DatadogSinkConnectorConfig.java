@@ -86,9 +86,39 @@ public class DatadogSinkConnectorConfig extends AbstractConfig {
     private static final String MAX_BACKOFF_DEFAULT = "30";
     private static final String MAX_BACKOFF_DISPLAY = "Max Backoff";
 
+    public final String ddSource;
+    public final String ddTags;
+    public final String ddService;
+    public final String ddStatus;
+    public final String ddHostname;
+    public final Integer port;
+    public final String apiKey;
+    public final String hostname;
+    public final Boolean useSSL;
+    public final Boolean useHTTP;
+    public final Boolean useCompression;
+    public final Integer compressionLevel;
+    public final Boolean noSSLValidation;
+    public final Integer maxRetries;
+    public final Integer maxBackoff;
+
     public DatadogSinkConnectorConfig(Map<?, ?> originals) {
         super(baseConfigDef(), originals);
-        // TODO: Validate configs
+        ddSource = getString(DD_SOURCE);
+        ddTags = getString(DD_TAGS);
+        ddService = getString(DD_SERVICE);
+        ddStatus = getString(DD_STATUS);
+        ddHostname = getString(DD_HOSTNAME);
+        port = getInt(PORT);
+        apiKey = getString(API_KEY);
+        hostname = getString(HOSTNAME);
+        useSSL = getBoolean(USE_SSL);
+        useHTTP = getBoolean(USE_HTTP);
+        useCompression = getBoolean(USE_COMPRESSION);
+        compressionLevel = getInt(COMPRESSION_LEVEL);
+        noSSLValidation = getBoolean(NO_SSL_VALIDATION);
+        maxRetries = getInt(MAX_RETRIES);
+        maxBackoff = getInt(MAX_BACKOFF);
     }
 
     private static ConfigDef baseConfigDef() {
@@ -114,7 +144,7 @@ public class DatadogSinkConnectorConfig extends AbstractConfig {
                 DD_SOURCE_DISPLAY
         ).define(
                 DD_TAGS,
-                Type.LIST,
+                Type.STRING,
                 DD_TAGS_DEFAULT,
                 Importance.MEDIUM,
                 DD_TAGS_DOC,
