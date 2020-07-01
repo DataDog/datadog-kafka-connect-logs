@@ -1,5 +1,7 @@
 package com.datadoghq;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,30 +22,21 @@ import com.github.jcustenborder.kafka.connect.utils.config.Title;
  *
  */
 
-@Description("This is a description of this connector and will show up in the documentation")
-@DocumentationImportant("This is a important information that will show up in the documentation.")
-@DocumentationTip("This is a tip that will show up in the documentation.")
-@Title("Super Sink Connector") //This is the display name that will show up in the documentation.
-@DocumentationNote("This is a note that will show up in the documentation")
+@Description("This connector loads Kafka Records and sends them as Datadog Logs to the Datadog Logs Intake API.")
+@Title("Datadog Logs Sink Connector")
 public class DatadogSinkConnector extends SinkConnector {
-  /*
-  Your connector should never use System.out for logging. All of your classes should use slf4j
-  for logging
-   */
-  private static Logger log = LoggerFactory.getLogger(DatadogSinkConnector.class);
-  private DatadogSinkConnectorConfig config;
+  private static final Logger log = LoggerFactory.getLogger(DatadogSinkConnector.class);
+  private Map<String, String> configProperties;
 
   @Override
   public List<Map<String, String>> taskConfigs(int maxTasks) {
-    //TODO: Define the individual task configurations that will be executed.
-
-    /**
-     * This is used to schedule the number of tasks that will be running. This should not exceed maxTasks.
-     * Here is a spot where you can dish out work. For example if you are reading from multiple tables
-     * in a database, you can assign a table per task.
-     */
-
-    throw new UnsupportedOperationException("This has not been implemented.");
+      log.info("Setting task configurations for {} workers.", maxTasks);
+      List<Map<String, String>> taskConfigs = new ArrayList<>();
+      Map<String, String> taskProps = new HashMap<>(configProperties);
+      for (int i = 0; i < maxTasks; i++) {
+        taskConfigs.add(taskProps);
+      }
+      return taskConfigs;
   }
 
   @Override
@@ -71,12 +64,11 @@ public class DatadogSinkConnector extends SinkConnector {
 
   @Override
   public ConfigDef config() {
-    return DatadogSinkConnectorConfig.config();
+    return DatadogSinkConnectorConfig.CONFIG_DEF;
   }
 
   @Override
   public Class<? extends Task> taskClass() {
-    //TODO: Return your task implementation.
     return DatadogSinkTask.class;
   }
 

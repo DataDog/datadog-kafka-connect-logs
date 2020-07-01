@@ -7,6 +7,7 @@ import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Width;
 import org.apache.kafka.common.config.ConfigDef.Range;
 import org.apache.kafka.common.config.ConfigDef.NonEmptyStringWithoutControlChars;
+import org.apache.kafka.common.config.ConfigException;
 
 import java.util.Map;
 
@@ -102,8 +103,10 @@ public class DatadogSinkConnectorConfig extends AbstractConfig {
     public final Integer maxRetries;
     public final Integer maxBackoff;
 
-    public DatadogSinkConnectorConfig(Map<?, ?> originals) {
-        super(baseConfigDef(), originals);
+    public static final ConfigDef CONFIG_DEF = baseConfigDef();
+
+    public DatadogSinkConnectorConfig(Map<String, String> props) {
+        super(baseConfigDef(), props);
         ddSource = getString(DD_SOURCE);
         ddTags = getString(DD_TAGS);
         ddService = getString(DD_SERVICE);
@@ -119,6 +122,21 @@ public class DatadogSinkConnectorConfig extends AbstractConfig {
         noSSLValidation = getBoolean(NO_SSL_VALIDATION);
         maxRetries = getInt(MAX_RETRIES);
         maxBackoff = getInt(MAX_BACKOFF);
+        validateConfig();
+    }
+
+    private void validateConfig() {
+        if (apiKey.isEmpty()) {
+            throw new ConfigException("API Key must not be empty.");
+        }
+
+        if (!useHTTP && useSSL && port != 10516) {
+            throw new ConfigException("Please use port 10516 when HTTP forwarding is disabled and SSL is enabled.");
+        }
+
+        if (compressionLevel < 1 || compressionLevel > 9) {
+            throw new ConfigException("Please use a compression level between 1 and 9.");
+        }
     }
 
     private static ConfigDef baseConfigDef() {
