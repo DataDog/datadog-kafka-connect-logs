@@ -12,13 +12,10 @@ import java.util.Map;
 
 import com.github.jcustenborder.kafka.connect.utils.VersionUtil;
 
-public class DatadogLogsSinkTask extends SinkTask {
-  /*
-    Your connector should never use System.out for logging. All of your classes should use slf4j
-    for logging
- */
-  private static Logger log = LoggerFactory.getLogger(DatadogLogsSinkTask.class);
+//TODO: Implement, with DatadogLogsApiWriter!
 
+public class DatadogLogsSinkTask extends SinkTask {
+  private static Logger log = LoggerFactory.getLogger(DatadogLogsSinkTask.class);
   DatadogLogsSinkConnectorConfig config;
   @Override
   public void start(Map<String, String> settings) {

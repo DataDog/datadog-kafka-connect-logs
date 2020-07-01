@@ -52,16 +52,6 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     private static final String HOSTNAME_DEFAULT = "http-intake.logs.datadoghq.com";
     private static final String HOSTNAME_DISPLAY = "Hostname";
 
-    public static final String USE_SSL = "connection.use_ssl";
-    private static final String USE_SSL_DOC = "If true, the agent initializes a secure connection to Datadog. Ensure to update the port if you disable it.";
-    private static final String USE_SSL_DEFAULT = "true";
-    private static final String USE_SSL_DISPLAY = "Use SSL";
-
-    public static final String USE_HTTP = "connection.use_http";
-    private static final String USE_HTTP_DOC = "Enable HTTP forwarding. If you disable it, make sure to update the port to 10516 if use_ssl is enabled or 10514 otherwise.";
-    private static final String USE_HTTP_DEFAULT = "true";
-    private static final String USE_HTTP_DISPLAY = "Use HTTP";
-
     public static final String USE_COMPRESSION = "connection.use_compression";
     private static final String USE_COMPRESSION_DOC = "Enable log compression for HTTP.";
     private static final String USE_COMPRESSION_DEFAULT = "true";
@@ -71,11 +61,6 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     private static final String COMPRESSION_LEVEL_DOC = "Set the log compression level for HTTP (1 to 9, 9 being the best ratio).";
     private static final String COMPRESSION_LEVEL_DEFAULT = "6";
     private static final String COMPRESSION_LEVEL_DISPLAY = "Compression Level";
-
-    public static final String NO_SSL_VALIDATION = "connection.no_ssl_validation";
-    private static final String NO_SSL_VALIDATION_DOC = "Disable SSL validation (useful for proxy forwarding).";
-    private static final String NO_SSL_VALIDATION_DEFAULT = "false";
-    private static final String NO_SSL_VALIDATION_DISPLAY = "No SSL Validation";
 
     public static final String MAX_RETRIES = "connection.max_retries";
     private static final String MAX_RETRIES_DOC = "The number of retries before the output plugin stops.";
@@ -95,11 +80,8 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     public final Integer port;
     public final String apiKey;
     public final String hostname;
-    public final Boolean useSSL;
-    public final Boolean useHTTP;
     public final Boolean useCompression;
     public final Integer compressionLevel;
-    public final Boolean noSSLValidation;
     public final Integer maxRetries;
     public final Integer maxBackoff;
 
@@ -115,11 +97,8 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         port = getInt(PORT);
         apiKey = getString(API_KEY);
         hostname = getString(HOSTNAME);
-        useSSL = getBoolean(USE_SSL);
-        useHTTP = getBoolean(USE_HTTP);
         useCompression = getBoolean(USE_COMPRESSION);
         compressionLevel = getInt(COMPRESSION_LEVEL);
-        noSSLValidation = getBoolean(NO_SSL_VALIDATION);
         maxRetries = getInt(MAX_RETRIES);
         maxBackoff = getInt(MAX_BACKOFF);
         validateConfig();
@@ -128,10 +107,6 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     private void validateConfig() {
         if (apiKey.isEmpty()) {
             throw new ConfigException("API Key must not be empty.");
-        }
-
-        if (!useHTTP && useSSL && port != 10516) {
-            throw new ConfigException("Please use port 10516 when HTTP forwarding is disabled and SSL is enabled.");
         }
 
         if (compressionLevel < 1 || compressionLevel > 9) {
@@ -240,26 +215,6 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
                 Width.LONG,
                 HOSTNAME_DISPLAY
         ).define(
-                USE_SSL,
-                Type.BOOLEAN,
-                USE_SSL_DEFAULT,
-                Importance.LOW,
-                USE_SSL_DOC,
-                group,
-                ++orderInGroup,
-                Width.LONG,
-                USE_SSL_DISPLAY
-        ).define(
-                USE_HTTP,
-                Type.BOOLEAN,
-                USE_HTTP_DEFAULT,
-                Importance.LOW,
-                USE_HTTP_DOC,
-                group,
-                ++orderInGroup,
-                Width.LONG,
-                USE_HTTP_DISPLAY
-        ).define(
                 USE_COMPRESSION,
                 Type.BOOLEAN,
                 USE_COMPRESSION_DEFAULT,
@@ -280,16 +235,6 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
                 ++orderInGroup,
                 Width.LONG,
                 COMPRESSION_LEVEL_DISPLAY
-        ).define(
-                NO_SSL_VALIDATION,
-                Type.BOOLEAN,
-                NO_SSL_VALIDATION_DEFAULT,
-                Importance.LOW,
-                NO_SSL_VALIDATION_DOC,
-                group,
-                ++orderInGroup,
-                Width.LONG,
-                NO_SSL_VALIDATION_DISPLAY
         ).define(
                 MAX_RETRIES,
                 Type.INT,
