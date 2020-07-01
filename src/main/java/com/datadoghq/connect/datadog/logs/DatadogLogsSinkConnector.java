@@ -19,56 +19,50 @@ import com.github.jcustenborder.kafka.connect.utils.VersionUtil;
 import com.github.jcustenborder.kafka.connect.utils.config.Description;
 import com.github.jcustenborder.kafka.connect.utils.config.Title;
 
-/**
- *
- */
-
-@Description("This connector loads Kafka Records and sends them as Datadog Logs to the Datadog Logs Intake API.")
-@Title("Datadog Logs Sink Connector")
 public class DatadogLogsSinkConnector extends SinkConnector {
-  private static final Logger log = LoggerFactory.getLogger(DatadogLogsSinkConnector.class);
-  private Map<String, String> configProps;
+    private static final Logger log = LoggerFactory.getLogger(DatadogLogsSinkConnector.class);
+    private Map<String, String> configProps;
 
-  @Override
-  public List<Map<String, String>> taskConfigs(int maxTasks) {
-      log.info("Setting task configurations for {} workers.", maxTasks);
-      List<Map<String, String>> taskConfigs = new ArrayList<>();
-      Map<String, String> taskProps = new HashMap<>(configProps);
-      for (int i = 0; i < maxTasks; i++) {
-        taskConfigs.add(taskProps);
-      }
-      return taskConfigs;
-  }
+    @Override
+    public List<Map<String, String>> taskConfigs(int maxTasks) {
+        log.info("Setting task configurations for {} workers.", maxTasks);
+        List<Map<String, String>> taskConfigs = new ArrayList<>();
+        Map<String, String> taskProps = new HashMap<>(configProps);
+        for (int i = 0; i < maxTasks; i++) {
+            taskConfigs.add(taskProps);
+        }
+        return taskConfigs;
+    }
 
-  @Override
-  public void start(Map<String, String> props) {
-      log.info("Starting Datadog Logs Sink Connector.");
-      configProps = props;
-  }
+    @Override
+    public void start(Map<String, String> props) {
+        log.info("Starting Datadog Logs Sink Connector.");
+        configProps = props;
+    }
 
-  @Override
-  public void stop() {
-      log.info("Stopping Datadog Logs Sink Connector.");
-  }
+    @Override
+    public void stop() {
+        log.info("Stopping Datadog Logs Sink Connector.");
+    }
 
-  @Override
-  public ConfigDef config() {
-      return DatadogLogsSinkConnectorConfig.CONFIG_DEF;
-  }
+    @Override
+    public ConfigDef config() {
+        return DatadogLogsSinkConnectorConfig.CONFIG_DEF;
+    }
 
-  @Override
-  public Class<? extends Task> taskClass() {
-      return DatadogLogsSinkTask.class;
-  }
+    @Override
+    public Class<? extends Task> taskClass() {
+        return DatadogLogsSinkTask.class;
+    }
 
-  @Override
-  public String version() {
-      return Version.getVersion();
-  }
+    @Override
+    public String version() {
+        return Version.getVersion();
+    }
 
-  @Override
-  public Config validate(Map<String, String> connectorConfigs) {
-      log.info("Validating Datadog Logs Sink Connector config.");
-      return super.validate(connectorConfigs);
-  }
+    @Override
+    public Config validate(Map<String, String> connectorConfigs) {
+        log.info("Validating Datadog Logs Sink Connector config.");
+        return super.validate(connectorConfigs);
+    }
 }
