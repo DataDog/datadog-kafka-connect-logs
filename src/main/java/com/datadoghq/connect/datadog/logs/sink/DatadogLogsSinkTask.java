@@ -1,4 +1,4 @@
-package com.datadoghq;
+package com.datadoghq.connect.datadog.logs.sink;
 
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -12,17 +12,17 @@ import java.util.Map;
 
 import com.github.jcustenborder.kafka.connect.utils.VersionUtil;
 
-public class DatadogSinkTask extends SinkTask {
+public class DatadogLogsSinkTask extends SinkTask {
   /*
     Your connector should never use System.out for logging. All of your classes should use slf4j
     for logging
  */
-  private static Logger log = LoggerFactory.getLogger(DatadogSinkTask.class);
+  private static Logger log = LoggerFactory.getLogger(DatadogLogsSinkTask.class);
 
-  DatadogSinkConnectorConfig config;
+  DatadogLogsSinkConnectorConfig config;
   @Override
   public void start(Map<String, String> settings) {
-    this.config = new DatadogSinkConnectorConfig(settings);
+    this.config = new DatadogLogsSinkConnectorConfig(settings);
     //TODO: Create resources like database or api connections here.
   }
 

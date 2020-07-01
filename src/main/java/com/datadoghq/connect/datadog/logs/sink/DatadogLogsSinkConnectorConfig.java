@@ -1,4 +1,4 @@
-package com.datadoghq;
+package com.datadoghq.connect.datadog.logs.sink;
 
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
@@ -11,7 +11,7 @@ import org.apache.kafka.common.config.ConfigException;
 
 import java.util.Map;
 
-public class DatadogSinkConnectorConfig extends AbstractConfig {
+public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
     public static final String DD_SOURCE = "datadog.source";
     private static final String DD_SOURCE_DOC = "The integration name associated with your log: the technology from which the log originated.";
@@ -105,7 +105,7 @@ public class DatadogSinkConnectorConfig extends AbstractConfig {
 
     public static final ConfigDef CONFIG_DEF = baseConfigDef();
 
-    public DatadogSinkConnectorConfig(Map<String, String> props) {
+    public DatadogLogsSinkConnectorConfig(Map<String, String> props) {
         super(baseConfigDef(), props);
         ddSource = getString(DD_SOURCE);
         ddTags = getString(DD_TAGS);

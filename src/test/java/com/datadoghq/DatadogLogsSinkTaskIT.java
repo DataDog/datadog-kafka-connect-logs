@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
  * take a look at https://github.com/jcustenborder/docker-compose-junit-extension to launch docker
  * containers for your testing.
  */
-public class DatadogSinkTaskIT {
+public class DatadogLogsSinkTaskIT {
   @Test
   public void test() {
     // Congrats on a passing test!
