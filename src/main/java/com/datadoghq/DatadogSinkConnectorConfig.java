@@ -4,9 +4,11 @@ import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.common.config.ConfigDef.Importance;
+import org.apache.kafka.common.config.ConfigDef.Width;
+import org.apache.kafka.common.config.ConfigDef.Range;
+import org.apache.kafka.common.config.ConfigDef.NonEmptyStringWithoutControlChars;
 
 import java.util.Map;
-
 
 public class DatadogSinkConnectorConfig extends AbstractConfig {
 
@@ -16,7 +18,7 @@ public class DatadogSinkConnectorConfig extends AbstractConfig {
     private static final String DD_SOURCE_DISPLAY = "Source Metadata";
 
     public static final String DD_TAGS = "datadog.tags";
-    private static final String DD_TAGS_DOC = "Tags associated with your logs in a space separated tag:value format.";
+    private static final String DD_TAGS_DOC = "Tags associated with your logs in a comma separated tag:value format.";
     private static final String DD_TAGS_DEFAULT = "";
     private static final String DD_TAGS_DISPLAY = "Tags Metadata";
 
@@ -107,17 +109,18 @@ public class DatadogSinkConnectorConfig extends AbstractConfig {
                 Importance.MEDIUM,
                 DD_SOURCE_DOC,
                 group,
-                orderInGroup++, ConfigDef.Width.LONG,
+                ++orderInGroup,
+                Width.LONG,
                 DD_SOURCE_DISPLAY
         ).define(
                 DD_TAGS,
-                Type.STRING,
+                Type.LIST,
                 DD_TAGS_DEFAULT,
                 Importance.MEDIUM,
                 DD_TAGS_DOC,
                 group,
-                orderInGroup++,
-                ConfigDef.Width.LONG,
+                ++orderInGroup,
+                Width.LONG,
                 DD_TAGS_DISPLAY
         ).define(
                 DD_SERVICE,
@@ -126,8 +129,8 @@ public class DatadogSinkConnectorConfig extends AbstractConfig {
                 Importance.MEDIUM,
                 DD_SERVICE_DOC,
                 group,
-                orderInGroup++,
-                ConfigDef.Width.LONG,
+                ++orderInGroup,
+                Width.LONG,
                 DD_SERVICE_DISPLAY
         ).define(
                 DD_STATUS,
@@ -136,8 +139,8 @@ public class DatadogSinkConnectorConfig extends AbstractConfig {
                 Importance.MEDIUM,
                 DD_STATUS_DOC,
                 group,
-                orderInGroup++,
-                ConfigDef.Width.LONG,
+                ++orderInGroup,
+                Width.LONG,
                 DD_STATUS_DISPLAY
         ).define(
                 DD_HOSTNAME,
@@ -146,8 +149,8 @@ public class DatadogSinkConnectorConfig extends AbstractConfig {
                 Importance.MEDIUM,
                 DD_HOSTNAME_DOC,
                 group,
-                orderInGroup,
-                ConfigDef.Width.LONG,
+                ++orderInGroup,
+                Width.LONG,
                 DD_HOSTNAME_DISPLAY
         );
     }
@@ -156,6 +159,109 @@ public class DatadogSinkConnectorConfig extends AbstractConfig {
         int orderInGroup = 0;
         final String group = "Connection";
 
-        // TODO: Add connection configs
+        configDef.define(
+                PORT,
+                Type.INT,
+                PORT_DEFAULT,
+                Range.between(1, 65535),
+                Importance.LOW,
+                PORT_DOC,
+                group,
+                ++orderInGroup,
+                Width.LONG,
+                PORT_DISPLAY
+        ).define(
+                API_KEY,
+                Type.STRING,
+                null,
+                NonEmptyStringWithoutControlChars.nonEmptyStringWithoutControlChars(),
+                Importance.HIGH,
+                API_KEY_DOC,
+                group,
+                ++orderInGroup,
+                Width.LONG,
+                API_KEY_DISPLAY
+        ).define(
+                HOSTNAME,
+                Type.STRING,
+                HOSTNAME_DEFAULT,
+                Importance.LOW,
+                HOSTNAME_DOC,
+                group,
+                ++orderInGroup,
+                Width.LONG,
+                HOSTNAME_DISPLAY
+        ).define(
+                USE_SSL,
+                Type.BOOLEAN,
+                USE_SSL_DEFAULT,
+                Importance.LOW,
+                USE_SSL_DOC,
+                group,
+                ++orderInGroup,
+                Width.LONG,
+                USE_SSL_DISPLAY
+        ).define(
+                USE_HTTP,
+                Type.BOOLEAN,
+                USE_HTTP_DEFAULT,
+                Importance.LOW,
+                USE_HTTP_DOC,
+                group,
+                ++orderInGroup,
+                Width.LONG,
+                USE_HTTP_DISPLAY
+        ).define(
+                USE_COMPRESSION,
+                Type.BOOLEAN,
+                USE_COMPRESSION_DEFAULT,
+                Importance.LOW,
+                USE_COMPRESSION_DOC,
+                group,
+                ++orderInGroup,
+                Width.LONG,
+                USE_COMPRESSION_DISPLAY
+        ).define(
+                COMPRESSION_LEVEL,
+                Type.INT,
+                COMPRESSION_LEVEL_DEFAULT,
+                Range.between(1, 9),
+                Importance.LOW,
+                COMPRESSION_LEVEL_DOC,
+                group,
+                ++orderInGroup,
+                Width.LONG,
+                COMPRESSION_LEVEL_DISPLAY
+        ).define(
+                NO_SSL_VALIDATION,
+                Type.BOOLEAN,
+                NO_SSL_VALIDATION_DEFAULT,
+                Importance.LOW,
+                NO_SSL_VALIDATION_DOC,
+                group,
+                ++orderInGroup,
+                Width.LONG,
+                NO_SSL_VALIDATION_DISPLAY
+        ).define(
+                MAX_RETRIES,
+                Type.INT,
+                MAX_RETRIES_DEFAULT,
+                Importance.LOW,
+                MAX_RETRIES_DOC,
+                group,
+                ++orderInGroup,
+                Width.LONG,
+                MAX_RETRIES_DISPLAY
+        ).define(
+                MAX_BACKOFF,
+                Type.INT,
+                MAX_BACKOFF_DEFAULT,
+                Importance.LOW,
+                MAX_BACKOFF_DOC,
+                group,
+                ++orderInGroup,
+                Width.LONG,
+                MAX_BACKOFF_DISPLAY
+        );
     }
 }
