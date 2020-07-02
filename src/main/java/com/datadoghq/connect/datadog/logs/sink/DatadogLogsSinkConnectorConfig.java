@@ -14,7 +14,8 @@ import java.util.Map;
 public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
     public static final String DD_SOURCE = "datadog.source";
-    private static final String DD_SOURCE_DOC = "The integration name associated with your log: the technology from which the log originated.";
+    private static final String DD_SOURCE_DOC =
+            "The integration name associated with your log: the technology from which the log originated.";
     private static final String DD_SOURCE_DEFAULT = "";
     private static final String DD_SOURCE_DISPLAY = "Source Metadata";
 
@@ -29,7 +30,9 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     private static final String DD_SERVICE_DISPLAY = "Service Metadata";
 
     public static final String DD_STATUS = "datadog.status";
-    private static final String DD_STATUS_DOC = "This corresponds to the level/severity of a log. It is used to define patterns and has a dedicated layout in the Datadog Log UI.";
+    private static final String DD_STATUS_DOC =
+            "This corresponds to the level/severity of a log. " +
+                    "It is used to define patterns and has a dedicated layout in the Datadog Log UI.";
     private static final String DD_STATUS_DEFAULT = "";
     private static final String DD_STATUS_DISPLAY = "Status Metadata";
 
@@ -40,7 +43,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
     public static final String PORT = "connection.port";
     private static final String PORT_DOC = "A proxy port for when logs are not directly forwarded to Datadog.";
-    private static final String PORT_DEFAULT = "443";
+    private static final int PORT_DEFAULT = 443;
     private static final String PORT_DISPLAY = "Port";
 
     public static final String API_KEY = "connection.api_key";
@@ -54,23 +57,25 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
     public static final String USE_COMPRESSION = "connection.use_compression";
     private static final String USE_COMPRESSION_DOC = "Enable log compression for HTTP.";
-    private static final String USE_COMPRESSION_DEFAULT = "true";
+    private static final Boolean USE_COMPRESSION_DEFAULT = true;
     private static final String USE_COMPRESSION_DISPLAY = "Use Compression";
 
     public static final String COMPRESSION_LEVEL = "connection.compression_level";
-    private static final String COMPRESSION_LEVEL_DOC = "Set the log compression level for HTTP (1 to 9, 9 being the best ratio).";
-    private static final String COMPRESSION_LEVEL_DEFAULT = "6";
+    private static final String COMPRESSION_LEVEL_DOC =
+            "Set the log compression level for HTTP (1 to 9, 9 being the best ratio).";
+    private static final int COMPRESSION_LEVEL_DEFAULT = 6;
     private static final String COMPRESSION_LEVEL_DISPLAY = "Compression Level";
 
     public static final String MAX_RETRIES = "connection.max_retries";
     private static final String MAX_RETRIES_DOC = "The number of retries before the output plugin stops.";
-    private static final String MAX_RETRIES_DEFAULT = "5";
+    private static final int MAX_RETRIES_DEFAULT = 5;
     private static final String MAX_RETRIES_DISPLAY = "Max Retries";
 
-    public static final String MAX_BACKOFF = "connection.max_backoff";
-    private static final String MAX_BACKOFF_DOC = "The maximum time waited between each retry in seconds.";
-    private static final String MAX_BACKOFF_DEFAULT = "30";
-    private static final String MAX_BACKOFF_DISPLAY = "Max Backoff";
+    public static final String RETRY_BACKOFF_MS = "connection.retry_backoff_ms";
+    private static final int RETRY_BACKOFF_MS_DEFAULT = 3000;
+    private static final String RETRY_BACKOFF_MS_DOC =
+            "The time in milliseconds to wait following an error before a retry attempt is made.";
+    private static final String RETRY_BACKOFF_MS_DISPLAY = "Retry Backoff (millis)";
 
     public final String ddSource;
     public final String ddTags;
@@ -83,7 +88,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     public final Boolean useCompression;
     public final Integer compressionLevel;
     public final Integer maxRetries;
-    public final Integer maxBackoff;
+    public final Integer retryBackoffMs;
 
     public static final ConfigDef CONFIG_DEF = baseConfigDef();
 
@@ -100,7 +105,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         useCompression = getBoolean(USE_COMPRESSION);
         compressionLevel = getInt(COMPRESSION_LEVEL);
         maxRetries = getInt(MAX_RETRIES);
-        maxBackoff = getInt(MAX_BACKOFF);
+        retryBackoffMs = getInt(RETRY_BACKOFF_MS);
         validateConfig();
     }
 
@@ -246,15 +251,15 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
                 Width.LONG,
                 MAX_RETRIES_DISPLAY
         ).define(
-                MAX_BACKOFF,
+                RETRY_BACKOFF_MS,
                 Type.INT,
-                MAX_BACKOFF_DEFAULT,
+                RETRY_BACKOFF_MS_DEFAULT,
                 Importance.LOW,
-                MAX_BACKOFF_DOC,
+                RETRY_BACKOFF_MS_DOC,
                 group,
                 ++orderInGroup,
                 Width.LONG,
-                MAX_BACKOFF_DISPLAY
+                RETRY_BACKOFF_MS_DISPLAY
         );
     }
 }

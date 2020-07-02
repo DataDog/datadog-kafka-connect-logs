@@ -1,8 +1,9 @@
 package com.datadoghq.connect.datadog.logs.sink;
 
-import com.datadoghq.connect.datadog.logs.util.Version;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.connect.errors.ConnectException;
+import org.apache.kafka.connect.errors.RetriableException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.slf4j.Logger;
@@ -11,17 +12,12 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.Map;
 
-import com.github.jcustenborder.kafka.connect.utils.VersionUtil;
-import org.slf4j.MDC;
-
-//TODO: Implement, with DatadogLogsApiWriter!
-
 public class DatadogLogsSinkTask extends SinkTask {
     private static final Logger log = LoggerFactory.getLogger(DatadogLogsSinkTask.class);
 
     DatadogLogsSinkConnectorConfig config;
     DatadogLogsApiWriter writer;
-    int remainingTries;
+    int remainingRetries;
 
     @Override
     public void start(Map<String, String> settings) {
@@ -40,6 +36,39 @@ public class DatadogLogsSinkTask extends SinkTask {
             return;
         }
 
+        final SinkRecord first = records.iterator().next();
+        final int recordsCount = records.size();
+        log.trace(
+                "Received {} records. First record Kafka coordinates:({}-{}-{}). Writing them to the API...",
+                recordsCount, first.topic(), first.kafkaPartition(), first.kafkaOffset()
+        );
+
+        try {
+            writer.write(records);
+        } catch (Exception e) {
+            log.warn(
+                    "Write of {} records failed, remaining retries: {}",
+                    records.size(),
+                    remainingRetries,
+                    e
+            );
+
+            if (remainingRetries == 0) {
+                throw new ConnectException(e);
+            } else {
+                initWriter();
+                remainingRetries--;
+                context.timeout(config.retryBackoffMs);
+                throw new RetriableException(e);
+            }
+        }
+
+        remainingRetries = config.maxRetries;
+    }
+
+    @Override
+    public void flush(Map<TopicPartition, OffsetAndMetadata> map) {
+        // no-op
     }
 
     @Override
@@ -49,6 +78,6 @@ public class DatadogLogsSinkTask extends SinkTask {
 
     @Override
     public String version() {
-        return Version.getVersion();
+        return getClass().getPackage().getImplementationVersion();
     }
 }
