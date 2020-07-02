@@ -13,6 +13,11 @@ import java.util.Map;
 
 public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
+    // Respect limit documented at https://docs.datadoghq.com/api/?lang=bash#logs
+    public static final int DD_MAX_BATCH_LENGTH = 500;
+    public static final int DD_MAX_BATCH_SIZE = 5000000;
+    public static final String DD_TRUNCATION_SUFFIX = "...TRUNCATED...";
+
     public static final String DD_SOURCE = "datadog.source";
     private static final String DD_SOURCE_DOC =
             "The integration name associated with your log: the technology from which the log originated.";
@@ -77,11 +82,14 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
             "The time in milliseconds to wait following an error before a retry attempt is made.";
     private static final String RETRY_BACKOFF_MS_DISPLAY = "Retry Backoff (millis)";
 
+    // Datadog metadata
     public final String ddSource;
     public final String ddTags;
     public final String ddService;
     public final String ddStatus;
     public final String ddHostname;
+
+    // Connection configs
     public final Integer port;
     public final String apiKey;
     public final String hostname;
