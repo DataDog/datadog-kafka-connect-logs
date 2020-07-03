@@ -13,10 +13,6 @@ import java.util.Map;
 
 public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
-    // Respect limit documented at https://docs.datadoghq.com/api/?lang=bash#logs
-    public static final int DD_MAX_BATCH_LENGTH = 500;
-    public static final int DD_MAX_BATCH_SIZE = 5000000;
-    public static final String DD_TRUNCATION_SUFFIX = "...TRUNCATED...";
 
     public static final String DD_SOURCE = "datadog.source";
     private static final String DD_SOURCE_DOC =
@@ -88,6 +84,9 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     public final String ddService;
     public final String ddStatus;
     public final String ddHostname;
+
+    // Respect limit documented at https://docs.datadoghq.com/api/?lang=bash#logs
+    public final Integer ddMaxBatchLength = 500;
 
     // Connection configs
     public final Integer port;
