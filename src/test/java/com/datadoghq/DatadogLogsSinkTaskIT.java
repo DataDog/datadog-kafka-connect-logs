@@ -1,6 +1,7 @@
 package com.datadoghq;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * This test can be used for integration testing with the system you are integrating with. For example

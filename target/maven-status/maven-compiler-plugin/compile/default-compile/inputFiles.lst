@@ -1,5 +1,0 @@
-/Users/berzan.yildiz/IdeaProjects/kafka-connect-datadog-logs/src/main/java/com/datadoghq/connect/datadog/logs/DatadogLogsSinkConnector.java
-/Users/berzan.yildiz/IdeaProjects/kafka-connect-datadog-logs/src/main/java/com/datadoghq/connect/datadog/logs/util/Version.java
-/Users/berzan.yildiz/IdeaProjects/kafka-connect-datadog-logs/src/main/java/com/datadoghq/connect/datadog/logs/sink/DatadogLogsSinkConnectorConfig.java
-/Users/berzan.yildiz/IdeaProjects/kafka-connect-datadog-logs/src/main/java/com/datadoghq/connect/datadog/logs/sink/DatadogLogsApiWriter.java
-/Users/berzan.yildiz/IdeaProjects/kafka-connect-datadog-logs/src/main/java/com/datadoghq/connect/datadog/logs/sink/DatadogLogsSinkTask.java

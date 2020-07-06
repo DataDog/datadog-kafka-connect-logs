@@ -1,8 +1,0 @@
-#Mon Jul 06 20:29:45 CEST 2020
-configuration*?=E00A39E90A92FF0520DB132E41A11D8154272F78
-/Users/berzan.yildiz/IdeaProjects/kafka-connect-datadog-logs/src/main/resources/kafka-connect-datadog-logs-version.properties=1593609541336
-/Users/berzan.yildiz/IdeaProjects/kafka-connect-datadog-logs/src/main/java/com/datadoghq/connect/datadog/logs/DatadogLogsSinkConnector.java=1594059503976
-/Users/berzan.yildiz/IdeaProjects/kafka-connect-datadog-logs/src/main/java/com/datadoghq/connect/datadog/logs/sink/DatadogLogsSinkConnectorConfig.java=1594060068881
-/Users/berzan.yildiz/IdeaProjects/kafka-connect-datadog-logs/src/main/java/com/datadoghq/connect/datadog/logs/util/Version.java=1593609767863
-/Users/berzan.yildiz/IdeaProjects/kafka-connect-datadog-logs/src/main/java/com/datadoghq/connect/datadog/logs/sink/DatadogLogsSinkTask.java=1594042206736
-/Users/berzan.yildiz/IdeaProjects/kafka-connect-datadog-logs/src/main/java/com/datadoghq/connect/datadog/logs/sink/DatadogLogsApiWriter.java=1594059979268
