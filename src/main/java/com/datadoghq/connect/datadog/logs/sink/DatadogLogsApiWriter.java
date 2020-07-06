@@ -75,14 +75,14 @@ public class DatadogLogsApiWriter {
             return;
         }
 
-        URL url = new URL("http://" + config.hostname + ":" + config.port.toString() + "/v1/input/" + config.apiKey);
+        URL url = new URL("http://" + config.ddURL + ":" + config.ddPort.toString() + "/v1/input/" + config.ddAPIKey);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setDoOutput(true);
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/json");
         String requestContent = builder.toString();
 
-        if (config.useCompression) {
+        if (config.compressionEnable) {
             con.setRequestProperty("Content-Encoding", "gzip");
             requestContent = compress(requestContent);
         }
@@ -99,8 +99,7 @@ public class DatadogLogsApiWriter {
         // get response
         int status = con.getResponseCode();
         if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(con.getErrorStream()));
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getErrorStream()));
             String inputLine;
             StringBuilder error = new StringBuilder();
             while ((inputLine = in.readLine()) != null) {
@@ -115,8 +114,7 @@ public class DatadogLogsApiWriter {
         log.debug(", response code: " + status + ", " + con.getResponseMessage());
 
         // write the response to the log
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(con.getInputStream()));
+        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
         String inputLine;
         StringBuilder content = new StringBuilder();
         while ((inputLine = in.readLine()) != null) {
@@ -128,9 +126,9 @@ public class DatadogLogsApiWriter {
         con.disconnect();
     }
 
-    private static String compress(String str) throws IOException {
+    private String compress(String str) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream(str.length());
-        GZIPOutputStream gos = new GZIPOutputStream(os);
+        GZIPOutputStream gos = new GZIPOutputStream(os) {{def.setLevel(config.compressionLevel);}};
         gos.write(str.getBytes());
         os.close();
         gos.close();

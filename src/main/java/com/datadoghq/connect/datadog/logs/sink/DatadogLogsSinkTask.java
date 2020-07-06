@@ -58,12 +58,12 @@ public class DatadogLogsSinkTask extends SinkTask {
             } else {
                 initWriter();
                 remainingRetries--;
-                context.timeout(config.retryBackoffMs);
+                context.timeout(config.retryBackoffMS);
                 throw new RetriableException(e);
             }
         }
 
-        remainingRetries = config.maxRetries;
+        remainingRetries = config.retryMax;
     }
 
     @Override
