@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="6.18">
+<file name="/Users/berzan.yildiz/IdeaProjects/kafka-connect-datadog-logs/src/main/java/com/datadoghq/connect/datadog/logs/util/Version.java">
+</file>
+<file name="/Users/berzan.yildiz/IdeaProjects/kafka-connect-datadog-logs/src/main/java/com/datadoghq/connect/datadog/logs/DatadogLogsSinkConnector.java">
+</file>
+<file name="/Users/berzan.yildiz/IdeaProjects/kafka-connect-datadog-logs/src/main/java/com/datadoghq/connect/datadog/logs/sink/DatadogLogsApiWriter.java">
+</file>
+<file name="/Users/berzan.yildiz/IdeaProjects/kafka-connect-datadog-logs/src/main/java/com/datadoghq/connect/datadog/logs/sink/DatadogLogsSinkConnectorConfig.java">
+</file>
+<file name="/Users/berzan.yildiz/IdeaProjects/kafka-connect-datadog-logs/src/main/java/com/datadoghq/connect/datadog/logs/sink/DatadogLogsSinkTask.java">
+</file>
+<file name="/Users/berzan.yildiz/IdeaProjects/kafka-connect-datadog-logs/src/main/resources/kafka-connect-datadog-logs-version.properties">
+</file>
+</checkstyle>

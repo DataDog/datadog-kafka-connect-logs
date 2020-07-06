@@ -1,9 +1,6 @@
 package com.datadoghq;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 /**
  * This test can be used for integration testing with the system you are integrating with. For example

@@ -5,55 +5,129 @@
 
     <groupId>com.datadoghq</groupId>
     <artifactId>kafka-connect-datadog-logs</artifactId>
-    <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-
+    <organization>
+        <name>Datadog</name>
+        <url>https://www.datadoghq.com/</url>
+    </organization>
     <name>kafka-connect-datadog-logs</name>
-    <description>A Kafka Connect Connector for kafka-connect-logs</description>
+    <version>1.0.0</version>
+    <description>A Kafka Connect Connector that sends Kafka Connect records as logs to the Datadog API.</description>
+    <url>https://github.com/DataDog/kafka-connect-datadog-logs</url>
 
-    <parent>
-        <groupId>com.github.jcustenborder.kafka.connect</groupId>
-        <artifactId>kafka-connect-parent</artifactId>
-        <version>2.4.0</version>
-    </parent>
+    <developers>
+        <developer> <!-- Additions for new Datadog features -->
+            <id>datadog</id>
+            <name>Datadog developers</name>
+            <email>dev@datadoghq.com</email>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>Apache License 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/DataDog/kafka-connect-datadog-logs</url>
+        <connection>scm:git:git://github.com/DataDog/kafka-connect-datadog-logs.git</connection>
+        <developerConnection>scm:git:git@github.com:Datadog/kafka-connect-datadog-logs.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <properties>
+        <checkstyle.config.location>style.xml</checkstyle.config.location>
+        <checkstyle.consoleOutput>true</checkstyle.consoleOutput>
+        <java.version>1.8</java.version>
+        <junit.version>4.9</junit.version>
+        <kafka.connect.maven.plugin.version>0.11.3</kafka.connect.maven.plugin.version>
+        <kafka.version>2.5.0</kafka.version>
+        <maven-checkstyle-plugin.version>3.0.0</maven-checkstyle-plugin.version>
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+        <maven-jxr-plugin.version>3.0.0</maven-jxr-plugin.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>connect-api</artifactId>
+            <version>${kafka.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
+                <version>${maven-checkstyle-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>checkstyle</id>
+                        <phase>verify</phase>
+                        <configuration>
+                            <encoding>UTF-8</encoding>
+                            <consoleOutput>true</consoleOutput>
+                            <failsOnError>true</failsOnError>
+                            <failOnViolation>true</failOnViolation>
+                            <violationSeverity>warning</violationSeverity>
+                            <linkXRef>false</linkXRef>
+                        </configuration>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
-<!--
-Uncomment this second to generate a package to deploy to the Confluent Hub.
             <plugin>
-                <groupId>io.confluent</groupId>
-                <artifactId>kafka-connect-maven-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <inherited>true</inherited>
                 <configuration>
-                    <confluentControlCenterIntegration>true</confluentControlCenterIntegration>
-                    <documentationUrl>https://jcustenborder.github.io/kafka-connect-documentation/</documentationUrl>
-                    <componentTypes>
-                        <componentType>source</componentType>
-                        <componentType>sink</componentType>
-                        <componentType>transform</componentType>
-                        <componentType>converter</componentType>
-                    </componentTypes>
-                    <tags>
-                        <tag>kafka-connect-logs</tag>
-                    </tags>
-                    <title>Kafka Connect kafka-connect-logs</title>
-                    <supportUrl>${pom.issueManagement.url}</supportUrl>
-                    <supportSummary>Support provided through community involvement.</supportSummary>
-                    <excludes>
-                        <exclude>org.reflections:reflections</exclude>
-                    </excludes>
+                    <compilerArgs>
+                        <arg>-Xlint:all</arg>
+                        <arg>-Werror</arg>
+                    </compilerArgs>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                 </configuration>
             </plugin>
--->
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
     </build>
 
-
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${maven-checkstyle-plugin.version}</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>checkstyle</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+        </plugins>
+    </reporting>
 </project>

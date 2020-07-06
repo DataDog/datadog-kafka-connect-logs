@@ -2,11 +2,11 @@ package com.datadoghq.connect.datadog.logs.sink;
 
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
-import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.common.config.ConfigDef.Importance;
-import org.apache.kafka.common.config.ConfigDef.Width;
-import org.apache.kafka.common.config.ConfigDef.Range;
 import org.apache.kafka.common.config.ConfigDef.NonEmptyStringWithoutControlChars;
+import org.apache.kafka.common.config.ConfigDef.Range;
+import org.apache.kafka.common.config.ConfigDef.Type;
+import org.apache.kafka.common.config.ConfigDef.Width;
 import org.apache.kafka.common.config.ConfigException;
 
 import java.util.Map;
@@ -152,6 +152,10 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
                     RETRY_BACKOFF_MS_DISPLAY
             );
 
+    /**
+     * Constructs a configuration option from config passed as file or through the Connect API.
+     * @param props are configuration properties passed through a config file or through the Connect API.
+     */
     public DatadogLogsSinkConnectorConfig(Map<String, String> props) {
         super(CONFIG_DEF, props);
         ddPort = getInt(DATADOG_PORT);

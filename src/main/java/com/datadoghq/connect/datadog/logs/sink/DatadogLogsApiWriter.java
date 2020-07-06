@@ -4,13 +4,23 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.Response;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPOutputStream;
+import javax.ws.rs.core.Response;
 
 public class DatadogLogsApiWriter {
     private final DatadogLogsSinkConnectorConfig config;
@@ -21,6 +31,11 @@ public class DatadogLogsApiWriter {
         this.config = config;
     }
 
+    /**
+     * Writes records to the Datadog Logs API.
+     * @param records to be written from the Source Broker to the Datadog Logs API.
+     * @throws IOException may be thrown if the connection to the API fails.
+     */
     public void write(Collection<SinkRecord> records) throws IOException {
         for (SinkRecord record : records) {
 
@@ -128,7 +143,11 @@ public class DatadogLogsApiWriter {
 
     private String compress(String str) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream(str.length());
-        GZIPOutputStream gos = new GZIPOutputStream(os) {{def.setLevel(config.compressionLevel);}};
+        GZIPOutputStream gos = new GZIPOutputStream(os) {
+            {
+                def.setLevel(config.compressionLevel);
+            }
+        };
         gos.write(str.getBytes());
         os.close();
         gos.close();

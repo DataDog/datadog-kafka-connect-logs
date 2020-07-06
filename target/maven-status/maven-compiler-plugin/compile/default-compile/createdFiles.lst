@@ -1,0 +1,6 @@
+com/datadoghq/connect/datadog/logs/DatadogLogsSinkConnector.class
+com/datadoghq/connect/datadog/logs/util/Version.class
+com/datadoghq/connect/datadog/logs/sink/DatadogLogsApiWriter.class
+com/datadoghq/connect/datadog/logs/sink/DatadogLogsApiWriter$1.class
+com/datadoghq/connect/datadog/logs/sink/DatadogLogsSinkConnectorConfig.class
+com/datadoghq/connect/datadog/logs/sink/DatadogLogsSinkTask.class
