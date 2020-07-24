@@ -24,6 +24,7 @@ public class DatadogLogsSinkTask extends SinkTask {
         log.info("Starting Sink Task.");
         config = new DatadogLogsSinkConnectorConfig(settings);
         initWriter();
+        remainingRetries = config.retryMax;
     }
 
     private void initWriter() {
@@ -64,11 +65,6 @@ public class DatadogLogsSinkTask extends SinkTask {
         }
 
         remainingRetries = config.retryMax;
-    }
-
-    @Override
-    public void flush(Map<TopicPartition, OffsetAndMetadata> map) {
-        // no-op
     }
 
     @Override

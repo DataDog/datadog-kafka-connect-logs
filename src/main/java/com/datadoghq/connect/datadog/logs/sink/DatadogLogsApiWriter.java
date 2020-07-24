@@ -20,12 +20,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
+import javax.net.ssl.HttpsURLConnection;
 import javax.ws.rs.core.Response;
 
 public class DatadogLogsApiWriter {
     private final DatadogLogsSinkConnectorConfig config;
     private static final Logger log = LoggerFactory.getLogger(DatadogLogsApiWriter.class);
-    private final Map<String, List<SinkRecord>> batches = new HashMap<>();
+    private final List<SinkRecord> batch = new ArrayList<>();
 
     public DatadogLogsApiWriter(DatadogLogsSinkConnectorConfig config) {
         this.config = config;
@@ -38,39 +39,20 @@ public class DatadogLogsApiWriter {
      */
     public void write(Collection<SinkRecord> records) throws IOException {
         for (SinkRecord record : records) {
-
-            // Key to identify the batch by record topic and record key
-            String keyPattern = record.topic() + ":" + (record.key() == null ? "" : record.key().toString());
-
-            if (!batches.containsKey(keyPattern)) {
-                batches.put(keyPattern, new ArrayList<>(Collections.singletonList(record)));
-            } else {
-                batches.get(keyPattern).add(record);
+            if (batch.size() >= config.ddMaxBatchLength) {
+                sendBatch();
             }
 
-            if (batches.get(keyPattern).size() >= config.ddMaxBatchLength) {
-                sendBatch(keyPattern);
-            }
+            batch.add(record);
         }
 
-        flushBatches();
+        // Flush remaining records
+        sendBatch();
     }
 
-    private void flushBatches() throws IOException {
-        // Send remaining batches
-        for (Map.Entry<String, List<SinkRecord>> entry: batches.entrySet()) {
-            sendBatch(entry.getKey());
-        }
-    }
-
-    private void sendBatch(String keyPattern) throws IOException {
-        List<SinkRecord> records = batches.get(keyPattern);
-
+    private void sendBatch() throws IOException {
         StringBuilder builder = new StringBuilder();
-        int batchIndex = 0;
-        for (SinkRecord record : records) {
-            batchIndex++;
-
+        for (SinkRecord record : batch) {
             if (record == null) {
                 continue;
             }
@@ -79,10 +61,10 @@ public class DatadogLogsApiWriter {
                 continue;
             }
 
-            builder.append(record.value().toString());
-            if (batchIndex < records.size()) {
+            if (builder.length() > 0) {
                 builder.append(",");
             }
+            builder.append(record.value().toString());
         }
 
         if (builder.length() == 0) {
@@ -90,24 +72,20 @@ public class DatadogLogsApiWriter {
             return;
         }
 
-        URL url = new URL("http://" + config.ddURL + ":" + config.ddPort.toString() + "/v1/input/" + config.ddAPIKey);
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        URL url = new URL("https://" + config.ddURL + ":" + config.ddPort.toString() + "/v1/input/" + config.ddAPIKey);
+        HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
         con.setDoOutput(true);
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/json");
-        String requestContent = builder.toString();
-
-        if (config.compressionEnable) {
-            con.setRequestProperty("Content-Encoding", "gzip");
-            requestContent = compress(requestContent);
-        }
+        con.setRequestProperty("Content-Encoding", "gzip");
+        String requestContent = compress(builder.toString());
 
         OutputStreamWriter writer = new OutputStreamWriter(con.getOutputStream(), StandardCharsets.UTF_8);
         writer.write(requestContent);
         writer.close();
 
         //clear batch
-        batches.remove(keyPattern);
+        batch.clear();
 
         log.debug("Submitted payload: " + builder.toString() + ", url:" + url);
 
@@ -143,11 +121,7 @@ public class DatadogLogsApiWriter {
 
     private String compress(String str) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream(str.length());
-        GZIPOutputStream gos = new GZIPOutputStream(os) {
-            {
-                def.setLevel(config.compressionLevel);
-            }
-        };
+        GZIPOutputStream gos = new GZIPOutputStream(os);
         gos.write(str.getBytes());
         os.close();
         gos.close();
