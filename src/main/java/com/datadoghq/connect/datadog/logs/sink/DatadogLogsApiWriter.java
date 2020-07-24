@@ -51,6 +51,62 @@ public class DatadogLogsApiWriter {
     }
 
     private void sendBatch() throws IOException {
+        String requestContent = formatBatch();
+        if (requestContent.isEmpty()) {
+            log.debug("Nothing to send; Skipping the HTTP request.");
+            return;
+        }
+        String compressedPayload = compress(requestContent);
+
+        //TODO: Split up function and fix line reading, Olivier's comments.
+
+        URL url = new URL("https://" + config.ddURL + ":" + config.ddPort.toString() + "/v1/input/" + config.ddAPIKey);
+        HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+        con.setDoOutput(true);
+        con.setRequestMethod("POST");
+        con.setRequestProperty("Content-Type", "application/json");
+        con.setRequestProperty("Content-Encoding", "gzip");
+
+        OutputStreamWriter writer = new OutputStreamWriter(con.getOutputStream(), StandardCharsets.UTF_8);
+        writer.write(compressedPayload);
+        writer.close();
+
+        //clear batch
+        batch.clear();
+
+        log.debug("Submitted payload: " + requestContent);
+
+        // get response
+        int status = con.getResponseCode();
+        if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getErrorStream()));
+            String inputLine;
+            StringBuilder error = new StringBuilder();
+            while ((inputLine = in.readLine()) != null) {
+                error.append(inputLine);
+            }
+            in.close();
+            throw new IOException("HTTP Response code: " + status
+                    + ", " + con.getResponseMessage() + ", " + error
+                    + ", Submitted payload: " + requestContent
+                    + ", url:" + url);
+        }
+        log.debug(", response code: " + status + ", " + con.getResponseMessage());
+
+        // write the response to the log
+        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuilder content = new StringBuilder();
+        while ((inputLine = in.readLine()) != null) {
+            content.append(inputLine);
+        }
+
+        log.debug("Response content: " + content);
+        in.close();
+        con.disconnect();
+    }
+
+    private String formatBatch() {
         StringBuilder builder = new StringBuilder();
         for (SinkRecord record : batch) {
             if (record == null) {
@@ -68,55 +124,10 @@ public class DatadogLogsApiWriter {
         }
 
         if (builder.length() == 0) {
-            log.debug("Nothing to send; Skipping the HTTP request.");
-            return;
+            return "";
         }
 
-        URL url = new URL("https://" + config.ddURL + ":" + config.ddPort.toString() + "/v1/input/" + config.ddAPIKey);
-        HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
-        con.setDoOutput(true);
-        con.setRequestMethod("POST");
-        con.setRequestProperty("Content-Type", "application/json");
-        con.setRequestProperty("Content-Encoding", "gzip");
-        String requestContent = compress(builder.toString());
-
-        OutputStreamWriter writer = new OutputStreamWriter(con.getOutputStream(), StandardCharsets.UTF_8);
-        writer.write(requestContent);
-        writer.close();
-
-        //clear batch
-        batch.clear();
-
-        log.debug("Submitted payload: " + builder.toString() + ", url:" + url);
-
-        // get response
-        int status = con.getResponseCode();
-        if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
-            BufferedReader in = new BufferedReader(new InputStreamReader(con.getErrorStream()));
-            String inputLine;
-            StringBuilder error = new StringBuilder();
-            while ((inputLine = in.readLine()) != null) {
-                error.append(inputLine);
-            }
-            in.close();
-            throw new IOException("HTTP Response code: " + status
-                    + ", " + con.getResponseMessage() + ", " + error
-                    + ", Submitted payload: " + builder.toString()
-                    + ", url:" + url);
-        }
-        log.debug(", response code: " + status + ", " + con.getResponseMessage());
-
-        // write the response to the log
-        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-        String inputLine;
-        StringBuilder content = new StringBuilder();
-        while ((inputLine = in.readLine()) != null) {
-            content.append(inputLine);
-        }
-
-        log.debug("Response content: " + content);
-        in.close();
-        con.disconnect();
+        return builder.toString();
     }
 
     private String compress(String str) throws IOException {
