@@ -4,11 +4,7 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -56,54 +52,55 @@ public class DatadogLogsApiWriter {
             log.debug("Nothing to send; Skipping the HTTP request.");
             return;
         }
-        String compressedPayload = compress(requestContent);
-
-        //TODO: Split up function and fix line reading, Olivier's comments.
 
         URL url = new URL("https://" + config.ddURL + ":" + config.ddPort.toString() + "/v1/input/" + config.ddAPIKey);
-        HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
-        con.setDoOutput(true);
-        con.setRequestMethod("POST");
-        con.setRequestProperty("Content-Type", "application/json");
-        con.setRequestProperty("Content-Encoding", "gzip");
-
-        OutputStreamWriter writer = new OutputStreamWriter(con.getOutputStream(), StandardCharsets.UTF_8);
-        writer.write(compressedPayload);
-        writer.close();
-
-        //clear batch
+        HttpsURLConnection con = sendRequest(requestContent, url);
         batch.clear();
-
-        log.debug("Submitted payload: " + requestContent);
 
         // get response
         int status = con.getResponseCode();
         if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
-            BufferedReader in = new BufferedReader(new InputStreamReader(con.getErrorStream()));
-            String inputLine;
-            StringBuilder error = new StringBuilder();
-            while ((inputLine = in.readLine()) != null) {
-                error.append(inputLine);
-            }
-            in.close();
+            String error = getOutput(con.getErrorStream());
             throw new IOException("HTTP Response code: " + status
                     + ", " + con.getResponseMessage() + ", " + error
                     + ", Submitted payload: " + requestContent
                     + ", url:" + url);
         }
+
         log.debug(", response code: " + status + ", " + con.getResponseMessage());
 
         // write the response to the log
-        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-        String inputLine;
-        StringBuilder content = new StringBuilder();
-        while ((inputLine = in.readLine()) != null) {
-            content.append(inputLine);
-        }
+        String content = getOutput(con.getInputStream());
 
         log.debug("Response content: " + content);
-        in.close();
         con.disconnect();
+    }
+
+    private String getOutput(InputStream input) throws IOException {
+        ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = input.read(buffer)) != -1) {
+            errorOutput.write(buffer, 0, length);
+        }
+
+        return errorOutput.toString(StandardCharsets.UTF_8.name());
+    }
+
+    private HttpsURLConnection sendRequest(String requestContent, URL url) throws IOException {
+        HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+        con.setDoOutput(true);
+        con.setRequestMethod("POST");
+        con.setRequestProperty("Content-Type", "application/json");
+        con.setRequestProperty("Content-Encoding", "gzip");
+        String compressedPayload = compress(requestContent);
+
+        OutputStreamWriter writer = new OutputStreamWriter(con.getOutputStream(), StandardCharsets.UTF_8);
+        writer.write(compressedPayload);
+        writer.close();
+        log.debug("Submitted payload: " + requestContent);
+
+        return con;
     }
 
     private String formatBatch() {
