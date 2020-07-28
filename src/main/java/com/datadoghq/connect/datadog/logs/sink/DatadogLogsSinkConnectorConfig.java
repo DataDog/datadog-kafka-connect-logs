@@ -27,17 +27,6 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     private static final String DATADOG_URL_DEFAULT = "http-intake.logs.datadoghq.com";
     private static final String DATADOG_URL_DISPLAY = "DATADOG_URL";
 
-    public static final String COMPRESSION_ENABLE = "compression.enable";
-    private static final String COMPRESSION_ENABLE_DOC = "Enable log compression for HTTP.";
-    private static final Boolean COMPRESSION_ENABLE_DEFAULT = true;
-    private static final String COMPRESSION_ENABLE_DISPLAY = "Enable Compression";
-
-    public static final String COMPRESSION_LEVEL = "compression.level";
-    private static final String COMPRESSION_LEVEL_DOC =
-            "Set the log compression level for HTTP (1 to 9, 9 being the best ratio).";
-    private static final int COMPRESSION_LEVEL_DEFAULT = 6;
-    private static final String COMPRESSION_LEVEL_DISPLAY = "Compression Level";
-
     public static final String RETRY_MAX = "retry.max";
     private static final String RETRY_MAX_DOC = "The number of retries before the output plugin stops.";
     private static final int RETRY_MAX_DEFAULT = 5;
@@ -56,13 +45,10 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     public final Integer ddPort;
     public final String ddAPIKey;
     public final String ddURL;
-    public final Boolean compressionEnable;
-    public final Integer compressionLevel;
     public final Integer retryMax;
     public final Integer retryBackoffMS;
 
     private static final String DATADOG_GROUP = "Datadog";
-    private static final String COMPRESSION_GROUP = "Compression";
     private static final String RETRY_GROUP = "Retry";
 
     public static final ConfigDef CONFIG_DEF = new ConfigDef()
@@ -103,31 +89,6 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
                     DATADOG_URL_DISPLAY
             )
 
-            // Compression
-            .define(
-                    COMPRESSION_ENABLE,
-                    Type.BOOLEAN,
-                    COMPRESSION_ENABLE_DEFAULT,
-                    Importance.LOW,
-                    COMPRESSION_ENABLE_DOC,
-                    COMPRESSION_GROUP,
-                    1,
-                    Width.LONG,
-                    COMPRESSION_ENABLE_DISPLAY
-            )
-            .define(
-                    COMPRESSION_LEVEL,
-                    Type.INT,
-                    COMPRESSION_LEVEL_DEFAULT,
-                    Range.between(1, 9),
-                    Importance.LOW,
-                    COMPRESSION_LEVEL_DOC,
-                    COMPRESSION_GROUP,
-                    2,
-                    Width.LONG,
-                    COMPRESSION_LEVEL_DISPLAY
-            )
-
             // Retries
             .define(
                     RETRY_MAX,
@@ -161,8 +122,6 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         ddPort = getInt(DATADOG_PORT);
         ddAPIKey = getString(DATADOG_API_KEY);
         ddURL = getString(DATADOG_URL);
-        compressionEnable = getBoolean(COMPRESSION_ENABLE);
-        compressionLevel = getInt(COMPRESSION_LEVEL);
         retryMax = getInt(RETRY_MAX);
         retryBackoffMS = getInt(RETRY_BACKOFF_MS);
         validateConfig();
@@ -171,10 +130,6 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     private void validateConfig() {
         if (ddAPIKey.isEmpty()) {
             throw new ConfigException("API Key must not be empty.");
-        }
-
-        if (compressionLevel < 1 || compressionLevel > 9) {
-            throw new ConfigException("Please use a compression level between 1 and 9.");
         }
     }
 }

@@ -93,11 +93,12 @@ public class DatadogLogsApiWriter {
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/json");
         con.setRequestProperty("Content-Encoding", "gzip");
-        String compressedPayload = compress(requestContent);
+        byte[] compressedPayload = compress(requestContent);
 
-        OutputStreamWriter writer = new OutputStreamWriter(con.getOutputStream(), StandardCharsets.UTF_8);
-        writer.write(compressedPayload);
-        writer.close();
+
+        DataOutputStream output = new DataOutputStream(con.getOutputStream());
+        output.write(compressedPayload);
+        output.close();
         log.debug("Submitted payload: " + requestContent);
 
         return con;
@@ -127,13 +128,13 @@ public class DatadogLogsApiWriter {
         return builder.toString();
     }
 
-    private String compress(String str) throws IOException {
+    private byte[] compress(String str) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream(str.length());
         GZIPOutputStream gos = new GZIPOutputStream(os);
         gos.write(str.getBytes());
         os.close();
         gos.close();
-        return Base64.getEncoder().encodeToString(os.toByteArray());
+        return os.toByteArray();
     }
 
 }
