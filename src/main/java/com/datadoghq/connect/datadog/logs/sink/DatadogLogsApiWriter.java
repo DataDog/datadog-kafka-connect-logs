@@ -1,20 +1,19 @@
 package com.datadoghq.connect.datadog.logs.sink;
 
+import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.HttpsURLConnection;
 import javax.ws.rs.core.Response;
@@ -47,14 +46,23 @@ public class DatadogLogsApiWriter {
     }
 
     private void sendBatch() throws IOException {
-        String requestContent = formatBatch();
-        if (requestContent.isEmpty()) {
+        JSONArray message = formatBatch();
+        if (message.isEmpty()) {
             log.debug("Nothing to send; Skipping the HTTP request.");
             return;
         }
 
-        URL url = new URL("https://" + config.ddURL + ":" + config.ddPort.toString() + "/v1/input/" + config.ddAPIKey);
-        HttpsURLConnection con = sendRequest(requestContent, url);
+        JSONObject content = populateMetadata(message);
+
+        URL url = new URL(
+                "https://"
+                        + config.url
+                        + ":"
+                        + config.port.toString()
+                        + "/v1/input/"
+                        + config.ddApiKey
+        );
+        HttpsURLConnection con = sendRequest(content, url);
         batch.clear();
 
         // get response
@@ -64,16 +72,36 @@ public class DatadogLogsApiWriter {
             con.disconnect();
             throw new IOException("HTTP Response code: " + status
                     + ", " + con.getResponseMessage() + ", " + error
-                    + ", Submitted payload: " + requestContent);
+                    + ", Submitted payload: " + content);
         }
 
         log.debug("Response code: " + status + ", " + con.getResponseMessage());
 
         // write the response to the log
-        String content = getOutput(con.getInputStream());
+        String response = getOutput(con.getInputStream());
 
-        log.debug("Response content: " + content);
+        log.debug("Response content: " + response);
         con.disconnect();
+    }
+
+    private JSONObject populateMetadata(JSONArray message) {
+        JSONObject content = new JSONObject();
+        content.put("message", message);
+        content.put("ddsource", config.ddSource);
+
+        if (config.ddTags != null) {
+            content.put("ddtags", config.ddTags);
+        }
+
+        if (config.ddHostname != null) {
+            content.put("hostname", config.ddHostname);
+        }
+
+        if (config.ddService != null) {
+            content.put("service", config.ddService);
+        }
+
+        return content;
     }
 
     private String getOutput(InputStream input) throws IOException {
@@ -87,12 +115,13 @@ public class DatadogLogsApiWriter {
         return errorOutput.toString(StandardCharsets.UTF_8.name());
     }
 
-    private HttpsURLConnection sendRequest(String requestContent, URL url) throws IOException {
+    private HttpsURLConnection sendRequest(JSONObject content, URL url) throws IOException {
         HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
         con.setDoOutput(true);
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/json");
         con.setRequestProperty("Content-Encoding", "gzip");
+        String requestContent = content.toString();
         byte[] compressedPayload = compress(requestContent);
 
 
@@ -104,8 +133,9 @@ public class DatadogLogsApiWriter {
         return con;
     }
 
-    private String formatBatch() {
-        StringBuilder builder = new StringBuilder();
+    private JSONArray formatBatch() {
+        JSONArray batchRecords = new JSONArray();
+
         for (SinkRecord record : batch) {
             if (record == null) {
                 continue;
@@ -115,17 +145,22 @@ public class DatadogLogsApiWriter {
                 continue;
             }
 
-            if (builder.length() > 0) {
-                builder.append(",");
-            }
-            builder.append(record.value().toString());
+            JSONObject recordJSON = recordToJSON(record);
+            batchRecords.put(recordJSON);
         }
 
-        if (builder.length() == 0) {
-            return "";
-        }
+        return batchRecords;
+    }
 
-        return builder.toString();
+    private JSONObject recordToJSON(SinkRecord record) {
+        JsonConverter jsonConverter = new JsonConverter();
+        jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
+
+        byte[] rawJSONPayload = jsonConverter.fromConnectData(record.topic(), record.valueSchema(), record.value());
+        String jsonPayload = new String(rawJSONPayload, StandardCharsets.UTF_8);
+        //TODO: Fix malformed json
+
+        return new JSONObject(jsonPayload);
     }
 
     private byte[] compress(String str) throws IOException {

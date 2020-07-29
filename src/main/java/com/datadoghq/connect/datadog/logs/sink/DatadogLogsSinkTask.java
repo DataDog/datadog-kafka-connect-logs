@@ -59,12 +59,22 @@ public class DatadogLogsSinkTask extends SinkTask {
             } else {
                 initWriter();
                 remainingRetries--;
-                context.timeout(config.retryBackoffMS);
+                context.timeout(config.retryBackoffMs);
                 throw new RetriableException(e);
             }
         }
 
         remainingRetries = config.retryMax;
+    }
+
+    @Override
+    public void flush(Map<TopicPartition, OffsetAndMetadata> offsets) {
+        log.trace("Flushing data to Datadog with the following offsets: {}", offsets);
+    }
+
+    @Override
+    public void close(Collection<TopicPartition> partitions) {
+        log.debug("Closing the task for topic partitions: {}", partitions);
     }
 
     @Override
