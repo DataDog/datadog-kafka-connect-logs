@@ -61,13 +61,13 @@ public class DatadogLogsApiWriter {
         int status = con.getResponseCode();
         if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
             String error = getOutput(con.getErrorStream());
+            con.disconnect();
             throw new IOException("HTTP Response code: " + status
                     + ", " + con.getResponseMessage() + ", " + error
-                    + ", Submitted payload: " + requestContent
-                    + ", url:" + url);
+                    + ", Submitted payload: " + requestContent);
         }
 
-        log.debug(", response code: " + status + ", " + con.getResponseMessage());
+        log.debug("Response code: " + status + ", " + con.getResponseMessage());
 
         // write the response to the log
         String content = getOutput(con.getInputStream());
