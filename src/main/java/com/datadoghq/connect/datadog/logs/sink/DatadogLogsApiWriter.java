@@ -1,19 +1,18 @@
 package com.datadoghq.connect.datadog.logs.sink;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.HttpsURLConnection;
 import javax.ws.rs.core.Response;
@@ -46,13 +45,13 @@ public class DatadogLogsApiWriter {
     }
 
     private void sendBatch() throws IOException {
-        JSONArray message = formatBatch();
-        if (message.isEmpty()) {
+        JsonArray message = formatBatch();
+        if (message.size() == 0) {
             log.debug("Nothing to send; Skipping the HTTP request.");
             return;
         }
 
-        JSONObject content = populateMetadata(message);
+        JsonObject content = populateMetadata(message);
 
         URL url = new URL(
                 "https://"
@@ -84,21 +83,21 @@ public class DatadogLogsApiWriter {
         con.disconnect();
     }
 
-    private JSONObject populateMetadata(JSONArray message) {
-        JSONObject content = new JSONObject();
-        content.put("message", message);
-        content.put("ddsource", config.ddSource);
+    private JsonObject populateMetadata(JsonArray message) {
+        JsonObject content = new JsonObject();
+        content.add("message", message);
+        content.add("ddsource", new JsonPrimitive(config.ddSource));
 
         if (config.ddTags != null) {
-            content.put("ddtags", config.ddTags);
+            content.add("ddtags", new JsonPrimitive(config.ddTags));
         }
 
         if (config.ddHostname != null) {
-            content.put("hostname", config.ddHostname);
+            content.add("hostname", new JsonPrimitive(config.ddHostname));
         }
 
         if (config.ddService != null) {
-            content.put("service", config.ddService);
+            content.add("service", new JsonPrimitive(config.ddService));
         }
 
         return content;
@@ -115,7 +114,7 @@ public class DatadogLogsApiWriter {
         return errorOutput.toString(StandardCharsets.UTF_8.name());
     }
 
-    private HttpsURLConnection sendRequest(JSONObject content, URL url) throws IOException {
+    private HttpsURLConnection sendRequest(JsonObject content, URL url) throws IOException {
         HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
         con.setDoOutput(true);
         con.setRequestMethod("POST");
@@ -133,8 +132,8 @@ public class DatadogLogsApiWriter {
         return con;
     }
 
-    private JSONArray formatBatch() {
-        JSONArray batchRecords = new JSONArray();
+    private JsonArray formatBatch() {
+        JsonArray batchRecords = new JsonArray();
 
         for (SinkRecord record : batch) {
             if (record == null) {
@@ -145,22 +144,20 @@ public class DatadogLogsApiWriter {
                 continue;
             }
 
-            JSONObject recordJSON = recordToJSON(record);
-            batchRecords.put(recordJSON);
+            JsonPrimitive recordJSON = recordToJSON(record);
+            batchRecords.add(recordJSON);
         }
 
         return batchRecords;
     }
 
-    private JSONObject recordToJSON(SinkRecord record) {
+    private JsonPrimitive recordToJSON(SinkRecord record) {
         JsonConverter jsonConverter = new JsonConverter();
         jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
 
         byte[] rawJSONPayload = jsonConverter.fromConnectData(record.topic(), record.valueSchema(), record.value());
         String jsonPayload = new String(rawJSONPayload, StandardCharsets.UTF_8);
-        //TODO: Fix malformed json
-
-        return new JSONObject(jsonPayload);
+        return new Gson().fromJson(jsonPayload, JsonPrimitive.class);
     }
 
     private byte[] compress(String str) throws IOException {
@@ -171,5 +168,4 @@ public class DatadogLogsApiWriter {
         gos.close();
         return os.toByteArray();
     }
-
 }
