@@ -39,7 +39,7 @@ public class DatadogLogsSinkTask extends SinkTask {
 
         final SinkRecord first = records.iterator().next();
         final int recordsCount = records.size();
-        log.trace(
+        log.debug(
                 "Received {} records. First record Kafka coordinates:({}-{}-{}). Writing them to the API...",
                 recordsCount, first.topic(), first.kafkaPartition(), first.kafkaOffset()
         );
@@ -69,7 +69,7 @@ public class DatadogLogsSinkTask extends SinkTask {
 
     @Override
     public void flush(Map<TopicPartition, OffsetAndMetadata> offsets) {
-        log.trace("Flushing data to Datadog with the following offsets: {}", offsets);
+        log.debug("Flushing data to Datadog with the following offsets: {}", offsets);
     }
 
     @Override
