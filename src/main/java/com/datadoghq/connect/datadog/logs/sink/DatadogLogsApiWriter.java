@@ -1,31 +1,26 @@
 package com.datadoghq.connect.datadog.logs.sink;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
+import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.GZIPOutputStream;
+import javax.net.ssl.HttpsURLConnection;
 import javax.ws.rs.core.Response;
 
 public class DatadogLogsApiWriter {
     private final DatadogLogsSinkConnectorConfig config;
     private static final Logger log = LoggerFactory.getLogger(DatadogLogsApiWriter.class);
-    private final Map<String, List<SinkRecord>> batches = new HashMap<>();
+    private final List<SinkRecord> batch = new ArrayList<>();
 
     public DatadogLogsApiWriter(DatadogLogsSinkConnectorConfig config) {
         this.config = config;
@@ -38,39 +33,109 @@ public class DatadogLogsApiWriter {
      */
     public void write(Collection<SinkRecord> records) throws IOException {
         for (SinkRecord record : records) {
-
-            // Key to identify the batch by record topic and record key
-            String keyPattern = record.topic() + ":" + (record.key() == null ? "" : record.key().toString());
-
-            if (!batches.containsKey(keyPattern)) {
-                batches.put(keyPattern, new ArrayList<>(Collections.singletonList(record)));
-            } else {
-                batches.get(keyPattern).add(record);
+            if (batch.size() >= config.ddMaxBatchLength) {
+                sendBatch();
             }
 
-            if (batches.get(keyPattern).size() >= config.ddMaxBatchLength) {
-                sendBatch(keyPattern);
-            }
+            batch.add(record);
         }
 
-        flushBatches();
+        // Flush remaining records
+        sendBatch();
     }
 
-    private void flushBatches() throws IOException {
-        // Send remaining batches
-        for (Map.Entry<String, List<SinkRecord>> entry: batches.entrySet()) {
-            sendBatch(entry.getKey());
+    private void sendBatch() throws IOException {
+        JsonArray message = formatBatch();
+        if (message.size() == 0) {
+            log.debug("Nothing to send; Skipping the HTTP request.");
+            return;
         }
+
+        JsonObject content = populateMetadata(message);
+
+        URL url = new URL(
+                "https://"
+                        + config.url
+                        + ":"
+                        + config.port.toString()
+                        + "/v1/input/"
+                        + config.ddApiKey
+        );
+        HttpsURLConnection con = sendRequest(content, url);
+        batch.clear();
+
+        // get response
+        int status = con.getResponseCode();
+        if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
+            String error = getOutput(con.getErrorStream());
+            con.disconnect();
+            throw new IOException("HTTP Response code: " + status
+                    + ", " + con.getResponseMessage() + ", " + error
+                    + ", Submitted payload: " + content);
+        }
+
+        log.debug("Response code: " + status + ", " + con.getResponseMessage());
+
+        // write the response to the log
+        String response = getOutput(con.getInputStream());
+
+        log.debug("Response content: " + response);
+        con.disconnect();
     }
 
-    private void sendBatch(String keyPattern) throws IOException {
-        List<SinkRecord> records = batches.get(keyPattern);
+    private JsonObject populateMetadata(JsonArray message) {
+        JsonObject content = new JsonObject();
+        content.add("message", message);
+        content.add("ddsource", new JsonPrimitive(config.ddSource));
 
-        StringBuilder builder = new StringBuilder();
-        int batchIndex = 0;
-        for (SinkRecord record : records) {
-            batchIndex++;
+        if (config.ddTags != null) {
+            content.add("ddtags", new JsonPrimitive(config.ddTags));
+        }
 
+        if (config.ddHostname != null) {
+            content.add("hostname", new JsonPrimitive(config.ddHostname));
+        }
+
+        if (config.ddService != null) {
+            content.add("service", new JsonPrimitive(config.ddService));
+        }
+
+        return content;
+    }
+
+    private String getOutput(InputStream input) throws IOException {
+        ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = input.read(buffer)) != -1) {
+            errorOutput.write(buffer, 0, length);
+        }
+
+        return errorOutput.toString(StandardCharsets.UTF_8.name());
+    }
+
+    private HttpsURLConnection sendRequest(JsonObject content, URL url) throws IOException {
+        HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+        con.setDoOutput(true);
+        con.setRequestMethod("POST");
+        con.setRequestProperty("Content-Type", "application/json");
+        con.setRequestProperty("Content-Encoding", "gzip");
+        String requestContent = content.toString();
+        byte[] compressedPayload = compress(requestContent);
+
+
+        DataOutputStream output = new DataOutputStream(con.getOutputStream());
+        output.write(compressedPayload);
+        output.close();
+        log.debug("Submitted payload: " + requestContent);
+
+        return con;
+    }
+
+    private JsonArray formatBatch() {
+        JsonArray batchRecords = new JsonArray();
+
+        for (SinkRecord record : batch) {
             if (record == null) {
                 continue;
             }
@@ -79,79 +144,28 @@ public class DatadogLogsApiWriter {
                 continue;
             }
 
-            builder.append(record.value().toString());
-            if (batchIndex < records.size()) {
-                builder.append(",");
-            }
+            JsonPrimitive recordJSON = recordToJSON(record);
+            batchRecords.add(recordJSON);
         }
 
-        if (builder.length() == 0) {
-            log.debug("Nothing to send; Skipping the HTTP request.");
-            return;
-        }
-
-        URL url = new URL("http://" + config.ddURL + ":" + config.ddPort.toString() + "/v1/input/" + config.ddAPIKey);
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
-        con.setDoOutput(true);
-        con.setRequestMethod("POST");
-        con.setRequestProperty("Content-Type", "application/json");
-        String requestContent = builder.toString();
-
-        if (config.compressionEnable) {
-            con.setRequestProperty("Content-Encoding", "gzip");
-            requestContent = compress(requestContent);
-        }
-
-        OutputStreamWriter writer = new OutputStreamWriter(con.getOutputStream(), StandardCharsets.UTF_8);
-        writer.write(requestContent);
-        writer.close();
-
-        //clear batch
-        batches.remove(keyPattern);
-
-        log.debug("Submitted payload: " + builder.toString() + ", url:" + url);
-
-        // get response
-        int status = con.getResponseCode();
-        if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
-            BufferedReader in = new BufferedReader(new InputStreamReader(con.getErrorStream()));
-            String inputLine;
-            StringBuilder error = new StringBuilder();
-            while ((inputLine = in.readLine()) != null) {
-                error.append(inputLine);
-            }
-            in.close();
-            throw new IOException("HTTP Response code: " + status
-                    + ", " + con.getResponseMessage() + ", " + error
-                    + ", Submitted payload: " + builder.toString()
-                    + ", url:" + url);
-        }
-        log.debug(", response code: " + status + ", " + con.getResponseMessage());
-
-        // write the response to the log
-        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-        String inputLine;
-        StringBuilder content = new StringBuilder();
-        while ((inputLine = in.readLine()) != null) {
-            content.append(inputLine);
-        }
-
-        log.debug("Response content: " + content);
-        in.close();
-        con.disconnect();
+        return batchRecords;
     }
 
-    private String compress(String str) throws IOException {
+    private JsonPrimitive recordToJSON(SinkRecord record) {
+        JsonConverter jsonConverter = new JsonConverter();
+        jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
+
+        byte[] rawJSONPayload = jsonConverter.fromConnectData(record.topic(), record.valueSchema(), record.value());
+        String jsonPayload = new String(rawJSONPayload, StandardCharsets.UTF_8);
+        return new Gson().fromJson(jsonPayload, JsonPrimitive.class);
+    }
+
+    private byte[] compress(String str) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream(str.length());
-        GZIPOutputStream gos = new GZIPOutputStream(os) {
-            {
-                def.setLevel(config.compressionLevel);
-            }
-        };
+        GZIPOutputStream gos = new GZIPOutputStream(os);
         gos.write(str.getBytes());
         os.close();
         gos.close();
-        return Base64.getEncoder().encodeToString(os.toByteArray());
+        return os.toByteArray();
     }
-
 }

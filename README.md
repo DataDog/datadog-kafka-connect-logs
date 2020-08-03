@@ -1,6 +1,6 @@
 # Introduction
 
-Welcome to your new Kafka Connect plugin!
+This project and README are WIP!
 
 # Running in development
 

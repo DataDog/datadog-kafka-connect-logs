@@ -24,6 +24,7 @@ public class DatadogLogsSinkTask extends SinkTask {
         log.info("Starting Sink Task.");
         config = new DatadogLogsSinkConnectorConfig(settings);
         initWriter();
+        remainingRetries = config.retryMax;
     }
 
     private void initWriter() {
@@ -38,7 +39,7 @@ public class DatadogLogsSinkTask extends SinkTask {
 
         final SinkRecord first = records.iterator().next();
         final int recordsCount = records.size();
-        log.trace(
+        log.debug(
                 "Received {} records. First record Kafka coordinates:({}-{}-{}). Writing them to the API...",
                 recordsCount, first.topic(), first.kafkaPartition(), first.kafkaOffset()
         );
@@ -58,7 +59,7 @@ public class DatadogLogsSinkTask extends SinkTask {
             } else {
                 initWriter();
                 remainingRetries--;
-                context.timeout(config.retryBackoffMS);
+                context.timeout(config.retryBackoffMs);
                 throw new RetriableException(e);
             }
         }
@@ -67,8 +68,13 @@ public class DatadogLogsSinkTask extends SinkTask {
     }
 
     @Override
-    public void flush(Map<TopicPartition, OffsetAndMetadata> map) {
-        // no-op
+    public void flush(Map<TopicPartition, OffsetAndMetadata> offsets) {
+        log.debug("Flushing data to Datadog with the following offsets: {}", offsets);
+    }
+
+    @Override
+    public void close(Collection<TopicPartition> partitions) {
+        log.debug("Closing the task for topic partitions: {}", partitions);
     }
 
     @Override

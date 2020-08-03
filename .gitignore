@@ -5,3 +5,5 @@ target/*
 .project
 .settings/
 .vscode/
+test/*
+.DS_Store
