@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class DatadogLogsSinkTaskTest extends EasyMockSupport {
 
     @Test
-    public void testRetries() throws IOException {
+    public void putTask_onRetry_shouldThrowExceptions() throws IOException {
         final int maxRetries = 2;
         final int retryBackoffMs = 1000;
 
