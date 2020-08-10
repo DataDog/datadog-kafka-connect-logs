@@ -14,14 +14,14 @@ import java.util.Map;
 
 public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
-    private static final String DD_TAGS = "tags";
-    private static final String DD_SERVICE = "service";
-    private static final String DD_HOSTNAME = "hostname";
-    private static final String DD_API_KEY = "api_key";
-    private static final String URL = "proxy.url";
-    private static final String PORT = "proxy.port";
-    private static final String RETRY_MAX = "retry.max";
-    private static final String RETRY_BACKOFF_MS = "retry.backoff_ms";
+    public static final String DD_TAGS = "tags";
+    public static final String DD_SERVICE = "service";
+    public static final String DD_HOSTNAME = "hostname";
+    public static final String DD_API_KEY = "api_key";
+    public static final String URL = "proxy.url";
+    public static final String PORT = "proxy.port";
+    public static final String MAX_RETRIES = "retry.max";
+    public static final String RETRY_BACKOFF_MS = "retry.backoff_ms";
 
     // Respect limit documented at https://docs.datadoghq.com/api/?lang=bash#logs
     public final Integer ddMaxBatchLength = 500;
@@ -46,7 +46,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         ddApiKey = getPasswordValue(DD_API_KEY);
         url = getString(URL);
         port = getInt(PORT);
-        retryMax = getInt(RETRY_MAX);
+        retryMax = getInt(MAX_RETRIES);
         retryBackoffMs = getInt(RETRY_BACKOFF_MS);
         validateConfig();
     }
@@ -145,7 +145,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         final String group = "Retry";
 
         configDef.define(
-                RETRY_MAX,
+                MAX_RETRIES,
                 Type.INT,
                 5,
                 Importance.LOW,

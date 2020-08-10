@@ -27,7 +27,7 @@ public class DatadogLogsSinkTask extends SinkTask {
         remainingRetries = config.retryMax;
     }
 
-    private void initWriter() {
+    protected void initWriter() {
         writer = new DatadogLogsApiWriter(config);
     }
 
