@@ -5,7 +5,7 @@ import org.apache.kafka.connect.errors.RetriableException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTaskContext;
 import org.easymock.EasyMockSupport;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -14,8 +14,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.easymock.EasyMock.expectLastCall;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class DatadogLogsSinkTaskTest extends EasyMockSupport {
 

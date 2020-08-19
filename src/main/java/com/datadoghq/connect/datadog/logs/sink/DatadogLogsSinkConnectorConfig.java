@@ -24,7 +24,8 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     public static final String RETRY_BACKOFF_MS = "retry.backoff_ms";
 
     // Respect limit documented at https://docs.datadoghq.com/api/?lang=bash#logs
-    public final Integer ddMaxBatchLength = 500;
+    public Integer ddMaxBatchLength = 500;
+    public Boolean useSSL = true;
     public final String ddSource = "kafka-connect";
 
     public final String ddTags;

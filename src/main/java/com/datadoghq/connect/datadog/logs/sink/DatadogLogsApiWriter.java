@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -52,35 +53,21 @@ public class DatadogLogsApiWriter {
         }
 
         JsonObject content = populateMetadata(message);
+        String protocol = config.useSSL ? "https://" : "http://";
 
         URL url = new URL(
-                "https://"
+                protocol
                         + config.url
                         + ":"
                         + config.port.toString()
                         + "/v1/input/"
                         + config.ddApiKey
         );
-        HttpsURLConnection con = sendRequest(content, url);
-        batch.clear();
-
-        // get response
-        int status = con.getResponseCode();
-        if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
-            String error = getOutput(con.getErrorStream());
-            con.disconnect();
-            throw new IOException("HTTP Response code: " + status
-                    + ", " + con.getResponseMessage() + ", " + error
-                    + ", Submitted payload: " + content);
+        if (config.useSSL) {
+            sendHTTPSRequest(content, url);
+        } else {
+            sendHTTPRequest(content, url);
         }
-
-        log.debug("Response code: " + status + ", " + con.getResponseMessage());
-
-        // write the response to the log
-        String response = getOutput(con.getInputStream());
-
-        log.debug("Response content: " + response);
-        con.disconnect();
     }
 
     private JsonObject populateMetadata(JsonArray message) {
@@ -114,7 +101,7 @@ public class DatadogLogsApiWriter {
         return errorOutput.toString(StandardCharsets.UTF_8.name());
     }
 
-    private HttpsURLConnection sendRequest(JsonObject content, URL url) throws IOException {
+    private void sendHTTPSRequest(JsonObject content, URL url) throws IOException {
         HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
         con.setDoOutput(true);
         con.setRequestMethod("POST");
@@ -129,7 +116,62 @@ public class DatadogLogsApiWriter {
         output.close();
         log.debug("Submitted payload: " + requestContent);
 
-        return con;
+        batch.clear();
+
+        // get response
+        int status = con.getResponseCode();
+        if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
+            String error = getOutput(con.getErrorStream());
+            con.disconnect();
+            throw new IOException("HTTP Response code: " + status
+                    + ", " + con.getResponseMessage() + ", " + error
+                    + ", Submitted payload: " + content);
+        }
+
+        log.debug("Response code: " + status + ", " + con.getResponseMessage());
+
+        // write the response to the log
+        String response = getOutput(con.getInputStream());
+
+        log.debug("Response content: " + response);
+        con.disconnect();
+    }
+
+    private void sendHTTPRequest(JsonObject content, URL url) throws IOException {
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setDoOutput(true);
+        con.setRequestMethod("POST");
+        con.setRequestProperty("Content-Type", "application/json");
+        con.setRequestProperty("Content-Encoding", "gzip");
+        String requestContent = content.toString();
+        byte[] compressedPayload = compress(requestContent);
+
+
+        DataOutputStream output = new DataOutputStream(con.getOutputStream());
+        output.write(compressedPayload);
+        output.close();
+        log.debug("Submitted payload: " + requestContent);
+
+
+        batch.clear();
+
+        // get response
+        int status = con.getResponseCode();
+        if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
+            String error = getOutput(con.getErrorStream());
+            con.disconnect();
+            throw new IOException("HTTP Response code: " + status
+                    + ", " + con.getResponseMessage() + ", " + error
+                    + ", Submitted payload: " + content);
+        }
+
+        log.debug("Response code: " + status + ", " + con.getResponseMessage());
+
+        // write the response to the log
+        String response = getOutput(con.getInputStream());
+
+        log.debug("Response content: " + response);
+        con.disconnect();
     }
 
     private JsonArray formatBatch() {
