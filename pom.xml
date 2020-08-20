@@ -16,7 +16,7 @@
     <url>https://github.com/DataDog/kafka-connect-datadog-logs</url>
 
     <developers>
-        <developer> <!-- Additions for new Datadog features -->
+        <developer>
             <id>datadog</id>
             <name>Datadog developers</name>
             <email>dev@datadoghq.com</email>
