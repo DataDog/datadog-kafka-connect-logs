@@ -201,11 +201,11 @@
 
                             <sourceUrl>https://github.com/DataDog/kafka-connect-datadog-logs</sourceUrl>
 
-                            <ownerUsername>bmikaili</ownerUsername>
-                            <ownerType>user</ownerType>
-                            <ownerName>Berzan Yildiz</ownerName>
-                            <ownerUrl>https://github.com/bmikaili</ownerUrl>
-                            <ownerLogo>logos/berzan.png</ownerLogo>
+                            <ownerUsername>datadog</ownerUsername>
+                            <ownerType>organization</ownerType>
+                            <ownerName>Datadog</ownerName>
+                            <ownerUrl>https://www.datadoghq.com/</ownerUrl>
+                            <ownerLogo>logos/datadog.png</ownerLogo>
 
                             <componentTypes>
                                 <componentType>sink</componentType>
