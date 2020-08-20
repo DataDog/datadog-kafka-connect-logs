@@ -19,7 +19,7 @@ public class DatadogLogsApiWriterTest {
     private DatadogLogsApiWriter writer;
     private Map<String, String> props;
     private List<SinkRecord> records;
-    private final RestHelper restHelper = new RestHelper();
+    private RestHelper restHelper;
 
     @Before
     public void setUp() throws Exception {
@@ -27,7 +27,8 @@ public class DatadogLogsApiWriterTest {
         props = new HashMap<>();
         props.put(DatadogLogsSinkConnectorConfig.URL, "localhost");
         props.put(DatadogLogsSinkConnectorConfig.PORT, "1");
-        props.put(DatadogLogsSinkConnectorConfig.DD_API_KEY, "test");
+        props.put(DatadogLogsSinkConnectorConfig.DD_API_KEY, RestHelper.apiKey);
+        restHelper = new RestHelper();
         restHelper.start();
     }
 
@@ -56,6 +57,54 @@ public class DatadogLogsApiWriterTest {
 
     @Test
     public void writer_batchAtMax_shouldSendBatched() throws IOException {
+        config = new DatadogLogsSinkConnectorConfig(props);
+        config.useSSL = false;
+        config.ddMaxBatchLength = 2;
+        writer = new DatadogLogsApiWriter(config);
+
+        records.add(new SinkRecord("someTopic", 0, null, "someKey", null, "someValue1", 0));
+        records.add(new SinkRecord("someTopic", 0, null, "someKey", null, "someValue2", 0));
+        writer.write(records);
+
+        Assert.assertEquals(1, restHelper.getCapturedRequests().size());
+
+        RequestInfo request = restHelper.getCapturedRequests().get(0);
+        Assert.assertEquals("{\"message\":[\"someValue1\",\"someValue2\"],\"ddsource\":\"kafka-connect\"}", request.getBody());
+    }
+
+    @Test
+    public void writer_batchAboveMax_shouldSendSeparate() throws IOException {
+        config = new DatadogLogsSinkConnectorConfig(props);
+        config.ddMaxBatchLength = 1;
+        config.useSSL = false;
+        writer = new DatadogLogsApiWriter(config);
+
+        records.add(new SinkRecord("someTopic", 0, null, "someKey", null, "someValue1", 0));
+        records.add(new SinkRecord("someTopic", 0, null, "someKey", null, "someValue2", 0));
+        writer.write(records);
+
+        Assert.assertEquals(2, restHelper.getCapturedRequests().size());
+
+        RequestInfo request1 = restHelper.getCapturedRequests().get(0);
+        RequestInfo request2 = restHelper.getCapturedRequests().get(1);
+
+        Assert.assertEquals("{\"message\":[\"someValue1\"],\"ddsource\":\"kafka-connect\"}", request1.getBody());
+        Assert.assertEquals("{\"message\":[\"someValue2\"],\"ddsource\":\"kafka-connect\"}", request2.getBody());
+    }
+
+    @Test(expected = IOException.class)
+    public void writer_givenError_shouldThrowException() throws IOException {
+        props.put(DatadogLogsSinkConnectorConfig.DD_API_KEY, "invalidAPIKey");
+        config = new DatadogLogsSinkConnectorConfig(props);
+        config.useSSL = false;
+        writer = new DatadogLogsApiWriter(config);
+
+        records.add(new SinkRecord("someTopic", 0, null, "someKey", null, "someValue1", 0));
+        writer.write(records);
+    }
+
+    @Test
+    public void metadata_asOneBatch_shouldPopulateOnce() throws IOException {
         props.put(DatadogLogsSinkConnectorConfig.DD_TAGS, "team:agent-core, author:berzan");
         props.put(DatadogLogsSinkConnectorConfig.DD_HOSTNAME, "test-host");
         props.put(DatadogLogsSinkConnectorConfig.DD_SERVICE, "test-service");
@@ -74,7 +123,7 @@ public class DatadogLogsApiWriterTest {
     }
 
     @Test
-    public void writer_batchAboveMax_shouldSendSeparate() throws IOException {
+    public void metadata_asMultipleBatches_shouldPopulateMultiple() throws IOException {
         props.put(DatadogLogsSinkConnectorConfig.DD_TAGS, "team:agent-core");
         props.put(DatadogLogsSinkConnectorConfig.DD_HOSTNAME, "test-host");
         props.put(DatadogLogsSinkConnectorConfig.DD_SERVICE, "test-service");
@@ -95,15 +144,4 @@ public class DatadogLogsApiWriterTest {
         Assert.assertEquals("{\"message\":[\"someValue2\"],\"ddsource\":\"kafka-connect\",\"ddtags\":\"team:agent-core\",\"hostname\":\"test-host\",\"service\":\"test-service\"}", request2.getBody());
 
     }
-    @Test(expected = IOException.class)
-    public void writer_givenError_shouldThrowException() throws IOException {
-        props.put(DatadogLogsSinkConnectorConfig.DD_API_KEY, "123");
-        config = new DatadogLogsSinkConnectorConfig(props);
-        config.useSSL = false;
-        writer = new DatadogLogsApiWriter(config);
-
-        records.add(new SinkRecord("someTopic", 0, null, "someKey", null, "someValue1", 0));
-        writer.write(records);
-    }
-
 }

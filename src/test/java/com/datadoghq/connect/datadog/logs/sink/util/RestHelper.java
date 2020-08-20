@@ -18,14 +18,15 @@ import java.util.zip.GZIPInputStream;
 public class RestHelper extends HttpServlet {
 
     private Server server;
-    private static List<RequestInfo> capturedRequests = new ArrayList<RequestInfo>();
+    private final List<RequestInfo> capturedRequests = new ArrayList<RequestInfo>();
+    public static final String apiKey = "test";
 
     public void start() throws Exception {
         server = new Server();
         ServerConnector connector = new ServerConnector(server);
         ServletContextHandler handler = new ServletContextHandler();
-        ServletHolder testServ = new ServletHolder("test", RestHelper.class);
-        handler.addServlet(testServ,"/v1/input/test");
+        ServletHolder testServ = new ServletHolder("test", this);
+        handler.addServlet(testServ,"/v1/input/" + apiKey);
 
         server.setHandler(handler);
         connector.setPort(1);

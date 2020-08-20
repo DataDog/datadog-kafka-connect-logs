@@ -64,7 +64,7 @@ public class DatadogLogsApiWriter {
                         + config.ddApiKey
         );
 
-        sendRequest(config.useSSL, content, url);
+        sendRequest(content, url);
     }
 
     private JsonObject populateMetadata(JsonArray message) {
@@ -98,13 +98,8 @@ public class DatadogLogsApiWriter {
         return errorOutput.toString(StandardCharsets.UTF_8.name());
     }
 
-    private void sendRequest(Boolean useSSL, JsonObject content, URL url) throws IOException {
-        HttpURLConnection con;
-        if (useSSL) {
-            con = (HttpsURLConnection) url.openConnection();
-        } else {
-            con = (HttpURLConnection) url.openConnection();
-        }
+    private void sendRequest(JsonObject content, URL url) throws IOException {
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setDoOutput(true);
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/json");
