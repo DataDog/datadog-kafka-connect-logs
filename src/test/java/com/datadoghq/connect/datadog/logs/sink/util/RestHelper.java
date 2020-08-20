@@ -39,7 +39,6 @@ public class RestHelper extends HttpServlet {
     }
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-
         capturedRequests.add(getRequestInfo(request));
 
         response.setContentType("application/json");
