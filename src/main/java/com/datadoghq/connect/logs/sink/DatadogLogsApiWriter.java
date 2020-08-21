@@ -1,4 +1,9 @@
-package com.datadoghq.connect.datadog.logs.sink;
+/*
+Unless explicitly stated otherwise all files in this repository are licensed under the Apache-2.0 License.
+This product includes software developed at Datadog (https://www.datadoghq.com/). Copyright 2020 Datadog, Inc.
+ */
+
+package com.datadoghq.connect.logs.sink;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -10,11 +15,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.zip.GZIPOutputStream;
-import javax.net.ssl.HttpsURLConnection;
 import javax.ws.rs.core.Response;
 
 public class DatadogLogsApiWriter {
@@ -52,35 +57,18 @@ public class DatadogLogsApiWriter {
         }
 
         JsonObject content = populateMetadata(message);
+        String protocol = config.useSSL ? "https://" : "http://";
 
         URL url = new URL(
-                "https://"
+                protocol
                         + config.url
                         + ":"
                         + config.port.toString()
                         + "/v1/input/"
                         + config.ddApiKey
         );
-        HttpsURLConnection con = sendRequest(content, url);
-        batch.clear();
 
-        // get response
-        int status = con.getResponseCode();
-        if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
-            String error = getOutput(con.getErrorStream());
-            con.disconnect();
-            throw new IOException("HTTP Response code: " + status
-                    + ", " + con.getResponseMessage() + ", " + error
-                    + ", Submitted payload: " + content);
-        }
-
-        log.debug("Response code: " + status + ", " + con.getResponseMessage());
-
-        // write the response to the log
-        String response = getOutput(con.getInputStream());
-
-        log.debug("Response content: " + response);
-        con.disconnect();
+        sendRequest(content, url);
     }
 
     private JsonObject populateMetadata(JsonArray message) {
@@ -114,8 +102,8 @@ public class DatadogLogsApiWriter {
         return errorOutput.toString(StandardCharsets.UTF_8.name());
     }
 
-    private HttpsURLConnection sendRequest(JsonObject content, URL url) throws IOException {
-        HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+    private void sendRequest(JsonObject content, URL url) throws IOException {
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setDoOutput(true);
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/json");
@@ -129,7 +117,25 @@ public class DatadogLogsApiWriter {
         output.close();
         log.debug("Submitted payload: " + requestContent);
 
-        return con;
+        batch.clear();
+
+        // get response
+        int status = con.getResponseCode();
+        if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
+            String error = getOutput(con.getErrorStream());
+            con.disconnect();
+            throw new IOException("HTTP Response code: " + status
+                    + ", " + con.getResponseMessage() + ", " + error
+                    + ", Submitted payload: " + content);
+        }
+
+        log.debug("Response code: " + status + ", " + con.getResponseMessage());
+
+        // write the response to the log
+        String response = getOutput(con.getInputStream());
+
+        log.debug("Response content: " + response);
+        con.disconnect();
     }
 
     private JsonArray formatBatch() {

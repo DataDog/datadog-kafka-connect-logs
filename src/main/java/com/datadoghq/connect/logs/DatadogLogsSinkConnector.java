@@ -1,8 +1,13 @@
-package com.datadoghq.connect.datadog.logs;
+/*
+Unless explicitly stated otherwise all files in this repository are licensed under the Apache-2.0 License.
+This product includes software developed at Datadog (https://www.datadoghq.com/). Copyright 2020 Datadog, Inc.
+ */
 
-import com.datadoghq.connect.datadog.logs.sink.DatadogLogsSinkConnectorConfig;
-import com.datadoghq.connect.datadog.logs.sink.DatadogLogsSinkTask;
-import com.datadoghq.connect.datadog.logs.util.Version;
+package com.datadoghq.connect.logs;
+
+import com.datadoghq.connect.logs.sink.DatadogLogsSinkConnectorConfig;
+import com.datadoghq.connect.logs.sink.DatadogLogsSinkTask;
+import com.datadoghq.connect.logs.util.Version;
 
 import org.apache.kafka.common.config.Config;
 import org.apache.kafka.common.config.ConfigDef;
