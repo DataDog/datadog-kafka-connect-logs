@@ -14,7 +14,3 @@ The jar file for use on [Confluent Hub](https://www.confluent.io/hub/) can be fo
 
 - Source Code: https://github.com/DataDog/kafka-connect-datadog-logs
 - Issue Tracker: https://github.com/DataDog/kafka-connect-datadog-logs/issues
-
-# License
-
-The project is licensed under the Apache 2 license.
