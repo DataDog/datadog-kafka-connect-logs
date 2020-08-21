@@ -38,10 +38,20 @@
         <tag>HEAD</tag>
     </scm>
 
+    <distributionManagement>
+        <repository>
+            <id>bintray-datadog-datadog-maven</id>
+            <name>datadog-datadog-maven</name>
+            <url>https://api.bintray.com/maven/${bintray.repo}/${bintray.package}/;publish=1</url>
+        </repository>
+    </distributionManagement>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <easymock.version>4.2</easymock.version>
+        <bintray.repo>datadog/datadog-maven</bintray.repo>
+        <bintray.package>datadog-kafka-connect-logs</bintray.package>
         <log4j.version>2.13.3</log4j.version>
         <jetty.version>9.4.31.v20200723</jetty.version>
         <junit.version>4.13</junit.version>
