@@ -3,7 +3,7 @@ Unless explicitly stated otherwise all files in this repository are licensed und
 This product includes software developed at Datadog (https://www.datadoghq.com/). Copyright 2020 Datadog, Inc.
  */
 
-package com.datadoghq.connect.datadog.logs.util;
+package com.datadoghq.connect.logs.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

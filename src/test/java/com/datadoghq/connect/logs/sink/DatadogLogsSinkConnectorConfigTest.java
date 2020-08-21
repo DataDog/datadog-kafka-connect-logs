@@ -3,11 +3,9 @@ Unless explicitly stated otherwise all files in this repository are licensed und
 This product includes software developed at Datadog (https://www.datadoghq.com/). Copyright 2020 Datadog, Inc.
  */
 
-package com.datadoghq.connect.datadog.logs.sink;
+package com.datadoghq.connect.logs.sink;
 
 import org.apache.kafka.common.config.ConfigException;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.HashMap;

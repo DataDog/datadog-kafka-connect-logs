@@ -3,10 +3,10 @@ Unless explicitly stated otherwise all files in this repository are licensed und
 This product includes software developed at Datadog (https://www.datadoghq.com/). Copyright 2020 Datadog, Inc.
  */
 
-package com.datadoghq.connect.datadog.logs.sink;
+package com.datadoghq.connect.logs.sink;
 
-import com.datadoghq.connect.datadog.logs.sink.util.RequestInfo;
-import com.datadoghq.connect.datadog.logs.sink.util.RestHelper;
+import com.datadoghq.connect.logs.sink.util.RequestInfo;
+import com.datadoghq.connect.logs.sink.util.RestHelper;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.junit.After;
 import org.junit.Assert;

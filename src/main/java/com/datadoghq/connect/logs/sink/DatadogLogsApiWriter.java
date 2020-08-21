@@ -3,7 +3,7 @@ Unless explicitly stated otherwise all files in this repository are licensed und
 This product includes software developed at Datadog (https://www.datadoghq.com/). Copyright 2020 Datadog, Inc.
  */
 
-package com.datadoghq.connect.datadog.logs.sink;
+package com.datadoghq.connect.logs.sink;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -20,7 +20,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.zip.GZIPOutputStream;
-import javax.net.ssl.HttpsURLConnection;
 import javax.ws.rs.core.Response;
 
 public class DatadogLogsApiWriter {
