@@ -19,14 +19,14 @@ import java.util.Map;
 
 public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
-    public static final String DD_TAGS = "tags";
-    public static final String DD_SERVICE = "service";
-    public static final String DD_HOSTNAME = "hostname";
-    public static final String DD_API_KEY = "api_key";
-    public static final String URL = "proxy.url";
-    public static final String PORT = "proxy.port";
-    public static final String MAX_RETRIES = "retry.max";
-    public static final String RETRY_BACKOFF_MS = "retry.backoff_ms";
+    public static final String DD_TAGS = "datadog.tags";
+    public static final String DD_SERVICE = "datadog.service";
+    public static final String DD_HOSTNAME = "datadog.hostname";
+    public static final String DD_API_KEY = "datadog.api_key";
+    public static final String URL = "datadog.proxy.url";
+    public static final String PORT = "datadog.proxy.port";
+    public static final String MAX_RETRIES = "datadog.retry.max";
+    public static final String RETRY_BACKOFF_MS = "datadog.retry.backoff_ms";
 
     // Respect limit documented at https://docs.datadoghq.com/api/?lang=bash#logs
     public Integer ddMaxBatchLength = 500;
@@ -67,15 +67,15 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
     private static ConfigDef baseConfigDef() {
         final ConfigDef configDef = new ConfigDef();
-        addDatadogConfigs(configDef);
+        addMetadataConfigs(configDef);
         addProxyConfigs(configDef);
         addRetryConfigs(configDef);
         return configDef;
     }
 
-    private static void addDatadogConfigs(ConfigDef configDef) {
+    private static void addMetadataConfigs(ConfigDef configDef) {
         int orderInGroup = 0;
-        final String group = "Datadog";
+        final String group = "Metadat";
 
         configDef.define(
                 DD_API_KEY,

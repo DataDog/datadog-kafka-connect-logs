@@ -68,10 +68,6 @@ set your Datadog `api_key`.
 
 See the [the Confluent documentation](https://docs.confluent.io/current/connect/managing.html#common-rest-examples) for additional REST examples.
 
-## Deployment
-
-See [Splunk Docs](https://docs.splunk.com/Documentation/KafkaConnect/latest/User/ConfigureSplunkKafkaConnect) to learn more about deployment options.
-
 ## Configuration
 
 After Kafka Connect is brought up on every host, all of the Kafka Connect instances will form a cluster automatically.
