@@ -94,6 +94,15 @@ A REST call can be executed against one of the cluster instances, and the config
 | `datadog.retry.max` | The number of retries before the output plugin stops.|| 5
 | `datadog.retry.backoff_ms` | The time in milliseconds to wait following an error before a retry attempt is made.|| 3000
 
+### Troubleshooting performance
+
+To improve performance of the connector, you can try the following options:
+
+* Increase the number of parallel tasks by adjusting the `tasks.max` parameter. Only do this if the hardware is 
+underutilized, such as low CPU, low memory usage and low data injection throughput. Do not set more tasks than partitions.
+* Increase hardware resources on cluster nodes in case of resource exhaustion, such as high CPU, or high memory usage.
+* Increase the number of Kafka Connect nodes.
+
 ## License
 
 Datadog Kafka Connect Logs is licensed under the Apache License 2.0. Details can be found in the file LICENSE.
