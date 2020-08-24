@@ -75,7 +75,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
     private static void addMetadataConfigs(ConfigDef configDef) {
         int orderInGroup = 0;
-        final String group = "Metadat";
+        final String group = "Metadata";
 
         configDef.define(
                 DD_API_KEY,

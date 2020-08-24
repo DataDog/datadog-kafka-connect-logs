@@ -73,21 +73,6 @@ See the [the Confluent documentation](https://docs.confluent.io/current/connect/
 After Kafka Connect is brought up on every host, all of the Kafka Connect instances will form a cluster automatically.
 A REST call can be executed against one of the cluster instances, and the configuration will automatically propagate to all instances in the cluster.
 
-### Configuration schema structure
-Use the below schema to configure Splunk Connect for Kafka
-
-```
-{
-"name": "<connector-name>",
-"config": {
-   "connector.class": "com.splunk.kafka.connect.SplunkSinkConnector",
-   "tasks.max": "<number-of-tasks>",
-   "topics": "<list-of-topics-separated-by-comma>",
-   
-  }
-}
-```
-
 ### Parameters
 
 #### Required Parameters
@@ -96,11 +81,18 @@ Use the below schema to configure Splunk Connect for Kafka
 |`name` | Connector name. A consumer group with this name will be created with tasks to be distributed evenly across the connector cluster nodes.|
 | `connector.class` | The Java class used to perform connector jobs. Keep the default unless you modify the connector.|`com.datadoghq.connect.logs.DatadogLogsSinkConnector`|
 | `tasks.max` |  The number of tasks generated to handle data collection jobs in parallel. The tasks will be spread evenly across all Datadog Kafka Connector nodes.||
-| `topics` |  Comma separated list of Kafka topics for Datadog to consume. `prod-topic1,prod-topc2,prod-topic3`||
-| `datadog.api_key` | API key to access Datadog API.||
+| `topics` |  Comma separated list of Kafka topics for Datadog to consume. `prod-topic1,prod-topic2,prod-topic3`||
+| `datadog.api_key` | The API key of your Datadog platform.||
 #### General Optional Parameters
 | Name              | Description                | Default Value  |
 |--------           |----------------------------|-----------------------|
+| `datadog.tags` | Tags associated with your logs in a comma separated tag:value format.||
+| `datadog.service` | The name of the application or service generating the log events.||
+| `datadog.hostname` | The name of the originating host of the log.||
+| `datadog.proxy.url` | API key to access Datadog API.||
+| `datadog.proxy.port` | API key to access Datadog API.||
+| `datadog.retry.max` | API key to access Datadog API.||
+| `datadog.retry.backoff_ms` | API key to access Datadog API.||
 
 
 
