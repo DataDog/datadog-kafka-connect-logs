@@ -103,6 +103,20 @@ underutilized, such as low CPU, low memory usage and low data injection throughp
 * Increase hardware resources on cluster nodes in case of resource exhaustion, such as high CPU, or high memory usage.
 * Increase the number of Kafka Connect nodes.
 
+## Single Message Transforms
+
+Kafka Connect supports Single Message Transforms that let you change the structure or content of a message. To 
+experiment with this feature, try adding these lines to your sink connector configuration:
+
+```properties
+transforms=addExtraField
+transforms.addExtraField.type=org.apache.kafka.connect.transforms.InsertField$Value
+transforms.addExtraField.static.field=extraField
+transforms.addExtraField.static.value=extraValue
+```
+Now if you restart the sink connector and send some more test messages, each new record should have a `extraField` field 
+with value `value`. For more in-depth video, see [confluent's documentation](https://docs.confluent.io/current/connect/transforms/index.html).
+
 ## License
 
 Datadog Kafka Connect Logs is licensed under the Apache License 2.0. Details can be found in the file LICENSE.
