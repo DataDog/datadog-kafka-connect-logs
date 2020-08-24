@@ -17,6 +17,8 @@ See [confluent's documentation](https://docs.confluent.io/current/connect/managi
 ### Download from Maven
 
 Download under `Direct Downloads` from [JFrog/Bintray](https://bintray.com/beta/#/datadog/datadog-maven/datadog-kafka-connect-logs?tab=overview).
+Also see [confluent's documentation](https://docs.confluent.io/current/connect/managing/community.html) on installing 
+community connectors.
 
 ### Build from Source
 
