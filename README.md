@@ -78,8 +78,8 @@ A REST call can be executed against one of the cluster instances, and the config
 #### Required Parameters
 | Name              | Description                | Default Value  |
 |--------           |----------------------------|-----------------------|
-|`name` | Connector name. A consumer group with this name will be created with tasks to be distributed evenly across the connector cluster nodes.|
-| `connector.class` | The Java class used to perform connector jobs. Keep the default unless you modify the connector.|`com.datadoghq.connect.logs.DatadogLogsSinkConnector`|
+|`name` | Connector name. A consumer group with this name will be created with tasks to be distributed evenly across the connector cluster nodes.||
+| `connector.class` | The Java class used to perform connector jobs. Keep the default unless you modify the connector.|`com.datadoghq.connect.logs.DatadogLogsSinkConnector`||
 | `tasks.max` |  The number of tasks generated to handle data collection jobs in parallel. The tasks will be spread evenly across all Datadog Kafka Connector nodes.||
 | `topics` |  Comma separated list of Kafka topics for Datadog to consume. `prod-topic1,prod-topic2,prod-topic3`||
 | `datadog.api_key` | The API key of your Datadog platform.||
@@ -89,12 +89,10 @@ A REST call can be executed against one of the cluster instances, and the config
 | `datadog.tags` | Tags associated with your logs in a comma separated tag:value format.||
 | `datadog.service` | The name of the application or service generating the log events.||
 | `datadog.hostname` | The name of the originating host of the log.||
-| `datadog.proxy.url` | API key to access Datadog API.||
-| `datadog.proxy.port` | API key to access Datadog API.||
-| `datadog.retry.max` | API key to access Datadog API.||
-| `datadog.retry.backoff_ms` | API key to access Datadog API.||
-
-
+| `datadog.proxy.url` | Proxy endpoint when logs are not directly forwarded to Datadog.|| http-intake.logs.datadoghq.com
+| `datadog.proxy.port` | Proxy port when logs are not directly forwarded to Datadog.|| 443
+| `datadog.retry.max` | The number of retries before the output plugin stops.|| 5
+| `datadog.retry.backoff_ms` | The time in milliseconds to wait following an error before a retry attempt is made.|| 3000
 
 ## License
 
