@@ -5,10 +5,7 @@ This product includes software developed at Datadog (https://www.datadoghq.com/)
 
 package com.datadoghq.connect.logs.sink;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.slf4j.Logger;
@@ -150,20 +147,20 @@ public class DatadogLogsApiWriter {
                 continue;
             }
 
-            JsonPrimitive recordJSON = recordToJSON(record);
+            JsonElement recordJSON = recordToJSON(record);
             batchRecords.add(recordJSON);
         }
 
         return batchRecords;
     }
 
-    private JsonPrimitive recordToJSON(SinkRecord record) {
+    private JsonElement recordToJSON(SinkRecord record) {
         JsonConverter jsonConverter = new JsonConverter();
         jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
 
         byte[] rawJSONPayload = jsonConverter.fromConnectData(record.topic(), record.valueSchema(), record.value());
         String jsonPayload = new String(rawJSONPayload, StandardCharsets.UTF_8);
-        return new Gson().fromJson(jsonPayload, JsonPrimitive.class);
+        return new Gson().fromJson(jsonPayload, JsonElement.class);
     }
 
     private byte[] compress(String str) throws IOException {

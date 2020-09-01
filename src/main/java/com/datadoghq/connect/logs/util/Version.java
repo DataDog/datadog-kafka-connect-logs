@@ -13,7 +13,7 @@ import java.util.Properties;
 
 public class Version {
     private static final Logger log = LoggerFactory.getLogger(Version.class);
-    private static final String PATH = "/datadog-kafka-connect-logs-version.properties";
+    private static final String PATH = "/datadog-kafka-connect-logs.properties";
     private static String version = "unknown";
 
     static {
