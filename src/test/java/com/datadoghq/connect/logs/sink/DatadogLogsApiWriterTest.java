@@ -74,7 +74,7 @@ public class DatadogLogsApiWriterTest {
         Assert.assertEquals(1, restHelper.getCapturedRequests().size());
 
         RequestInfo request = restHelper.getCapturedRequests().get(0);
-        Assert.assertEquals("{\"message\":[\"someValue1\",\"someValue2\"],\"ddsource\":\"kafka-connect\"}", request.getBody());
+        Assert.assertEquals("{\"message\":[\"someValue1\",\"someValue2\"],\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic\"}", request.getBody());
     }
 
     @Test
@@ -93,8 +93,28 @@ public class DatadogLogsApiWriterTest {
         RequestInfo request1 = restHelper.getCapturedRequests().get(0);
         RequestInfo request2 = restHelper.getCapturedRequests().get(1);
 
-        Assert.assertEquals("{\"message\":[\"someValue1\"],\"ddsource\":\"kafka-connect\"}", request1.getBody());
-        Assert.assertEquals("{\"message\":[\"someValue2\"],\"ddsource\":\"kafka-connect\"}", request2.getBody());
+        Assert.assertEquals("{\"message\":[\"someValue1\"],\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic\"}", request1.getBody());
+        Assert.assertEquals("{\"message\":[\"someValue2\"],\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic\"}", request2.getBody());
+    }
+
+    @Test
+    public void writer_readingMultipleTopics_shouldBatchSeparate() throws IOException {
+        config = new DatadogLogsSinkConnectorConfig(props);
+        config.ddMaxBatchLength = 2;
+        config.useSSL = false;
+        writer = new DatadogLogsApiWriter(config);
+
+        records.add(new SinkRecord("someTopic1", 0, null, "someKey", null, "someValue1", 0));
+        records.add(new SinkRecord("someTopic2", 0, null, "someKey", null, "someValue2", 0));
+        writer.write(records);
+
+        Assert.assertEquals(2, restHelper.getCapturedRequests().size());
+
+        RequestInfo request1 = restHelper.getCapturedRequests().get(0);
+        RequestInfo request2 = restHelper.getCapturedRequests().get(1);
+
+        Assert.assertEquals("{\"message\":[\"someValue1\"],\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic1\"}", request2.getBody());
+        Assert.assertEquals("{\"message\":[\"someValue2\"],\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic2\"}", request1.getBody());
     }
 
     @Test(expected = IOException.class)
@@ -124,7 +144,7 @@ public class DatadogLogsApiWriterTest {
 
         RequestInfo request = restHelper.getCapturedRequests().get(0);
 
-        Assert.assertEquals("{\"message\":[\"someValue1\",\"someValue2\"],\"ddsource\":\"kafka-connect\",\"ddtags\":\"team:agent-core,author:berzan\",\"hostname\":\"test-host\",\"service\":\"test-service\"}", request.getBody());
+        Assert.assertEquals("{\"message\":[\"someValue1\",\"someValue2\"],\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic,team:agent-core,author:berzan\",\"hostname\":\"test-host\",\"service\":\"test-service\"}", request.getBody());
     }
 
     @Test
@@ -145,8 +165,8 @@ public class DatadogLogsApiWriterTest {
         RequestInfo request1 = restHelper.getCapturedRequests().get(0);
         RequestInfo request2 = restHelper.getCapturedRequests().get(1);
 
-        Assert.assertEquals("{\"message\":[\"someValue1\"],\"ddsource\":\"kafka-connect\",\"ddtags\":\"team:agent-core\",\"hostname\":\"test-host\",\"service\":\"test-service\"}", request1.getBody());
-        Assert.assertEquals("{\"message\":[\"someValue2\"],\"ddsource\":\"kafka-connect\",\"ddtags\":\"team:agent-core\",\"hostname\":\"test-host\",\"service\":\"test-service\"}", request2.getBody());
+        Assert.assertEquals("{\"message\":[\"someValue1\"],\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic,team:agent-core\",\"hostname\":\"test-host\",\"service\":\"test-service\"}", request1.getBody());
+        Assert.assertEquals("{\"message\":[\"someValue2\"],\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic,team:agent-core\",\"hostname\":\"test-host\",\"service\":\"test-service\"}", request2.getBody());
 
     }
 }

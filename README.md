@@ -25,7 +25,7 @@ community connectors.
 1. Clone the repo from https://github.com/DataDog/datadog-kafka-connect-logs
 2. Verify that Java8 JRE or JDK is installed.
 3. Run `mvn clean compile package`. This will build the jar in the `/target` directory. The name will be `datadog-kafka-connect-logs-[VERSION].jar`.
-4. The jar file for use on [Confluent Hub](https://www.confluent.io/hub/) can be found in `target/components/packages`.
+4. The zip file for use on [Confluent Hub](https://www.confluent.io/hub/) can be found in `target/components/packages`.
 
 ## Quick Start
 

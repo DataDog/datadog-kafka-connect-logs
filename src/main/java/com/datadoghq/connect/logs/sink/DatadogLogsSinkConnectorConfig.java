@@ -75,7 +75,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
     private static void addMetadataConfigs(ConfigDef configDef) {
         int orderInGroup = 0;
-        final String group = "Metadata";
+        final String group = "Datadog Metadata";
 
         configDef.define(
                 DD_API_KEY,
@@ -122,7 +122,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
     private static void addProxyConfigs(ConfigDef configDef) {
         int orderInGroup = 0;
-        final String group = "Proxy";
+        final String group = "Datadog Proxy";
 
         configDef.define(
                 URL,
@@ -150,7 +150,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
     private static void addRetryConfigs(ConfigDef configDef) {
         int orderInGroup = 0;
-        final String group = "Retry";
+        final String group = "Datadog Retry";
 
         configDef.define(
                 MAX_RETRIES,

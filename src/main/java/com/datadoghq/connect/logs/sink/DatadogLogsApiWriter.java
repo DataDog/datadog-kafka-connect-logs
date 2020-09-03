@@ -16,13 +16,14 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.GZIPOutputStream;
 import javax.ws.rs.core.Response;
 
 public class DatadogLogsApiWriter {
     private final DatadogLogsSinkConnectorConfig config;
     private static final Logger log = LoggerFactory.getLogger(DatadogLogsApiWriter.class);
-    private final List<SinkRecord> batch = new ArrayList<>();
+    private Map<String, List<SinkRecord>> batches = new ConcurrentHashMap<>();
 
     public DatadogLogsApiWriter(DatadogLogsSinkConnectorConfig config) {
         this.config = config;
@@ -35,25 +36,35 @@ public class DatadogLogsApiWriter {
      */
     public void write(Collection<SinkRecord> records) throws IOException {
         for (SinkRecord record : records) {
-            if (batch.size() >= config.ddMaxBatchLength) {
-                sendBatch();
+            if (!batches.containsKey(record.topic())) {
+                batches.put(record.topic(), new ArrayList<> (Collections.singletonList(record)));
+            } else {
+                batches.get(record.topic()).add(record);
             }
-
-            batch.add(record);
+            if (batches.get(record.topic()).size() >= config.ddMaxBatchLength) {
+                sendBatch(record.topic());
+            }
         }
 
         // Flush remaining records
-        sendBatch();
+        flushBatches();
     }
 
-    private void sendBatch() throws IOException {
-        JsonArray message = formatBatch();
+    private void flushBatches() throws IOException {
+        // send any outstanding batches
+        for(Map.Entry<String,List<SinkRecord>> entry: batches.entrySet()) {
+            sendBatch(entry.getKey());
+        }
+    }
+
+    private void sendBatch(String topic) throws IOException {
+        JsonArray message = formatBatch(batches.get(topic));
         if (message.size() == 0) {
             log.debug("Nothing to send; Skipping the HTTP request.");
             return;
         }
 
-        JsonObject content = populateMetadata(message);
+        JsonObject content = populateMetadata(topic, message);
         String protocol = config.useSSL ? "https://" : "http://";
 
         URL url = new URL(
@@ -65,17 +76,20 @@ public class DatadogLogsApiWriter {
                         + config.ddApiKey
         );
 
+        batches.remove(topic);
         sendRequest(content, url);
     }
 
-    private JsonObject populateMetadata(JsonArray message) {
+    private JsonObject populateMetadata(String topic, JsonArray message) {
         JsonObject content = new JsonObject();
+        String tags = "topic:" + topic;
         content.add("message", message);
         content.add("ddsource", new JsonPrimitive(config.ddSource));
 
         if (config.ddTags != null) {
-            content.add("ddtags", new JsonPrimitive(config.ddTags));
+            tags += "," + config.ddTags;
         }
+        content.add("ddtags", new JsonPrimitive(tags));
 
         if (config.ddHostname != null) {
             content.add("hostname", new JsonPrimitive(config.ddHostname));
@@ -114,8 +128,6 @@ public class DatadogLogsApiWriter {
         output.close();
         log.debug("Submitted payload: " + requestContent);
 
-        batch.clear();
-
         // get response
         int status = con.getResponseCode();
         if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
@@ -135,10 +147,10 @@ public class DatadogLogsApiWriter {
         con.disconnect();
     }
 
-    private JsonArray formatBatch() {
+    private JsonArray formatBatch(List<SinkRecord> sinkRecords) {
         JsonArray batchRecords = new JsonArray();
 
-        for (SinkRecord record : batch) {
+        for (SinkRecord record : sinkRecords) {
             if (record == null) {
                 continue;
             }
