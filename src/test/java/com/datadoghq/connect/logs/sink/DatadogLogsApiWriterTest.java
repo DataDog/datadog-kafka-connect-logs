@@ -30,9 +30,7 @@ public class DatadogLogsApiWriterTest {
     public void setUp() throws Exception {
         records = new ArrayList<>();
         props = new HashMap<>();
-        props.put(DatadogLogsSinkConnectorConfig.URL, "localhost");
-        props.put(DatadogLogsSinkConnectorConfig.PORT, "1");
-        props.put(DatadogLogsSinkConnectorConfig.DD_API_KEY, RestHelper.apiKey);
+        props.put(DatadogLogsSinkConnectorConfig.DD_API_KEY, RestHelper.API_KEY);
         restHelper = new RestHelper();
         restHelper.start();
     }
@@ -47,6 +45,7 @@ public class DatadogLogsApiWriterTest {
     public void writer_givenConfigs_sendsPOSTToURL() throws IOException {
         config = new DatadogLogsSinkConnectorConfig(props);
         config.useSSL = false;
+        config.url = "localhost:1";
         writer = new DatadogLogsApiWriter(config);
 
         records.add(new SinkRecord("someTopic", 0, null, "someKey", null, "someValue1", 0));
@@ -64,6 +63,7 @@ public class DatadogLogsApiWriterTest {
     public void writer_batchAtMax_shouldSendBatched() throws IOException {
         config = new DatadogLogsSinkConnectorConfig(props);
         config.useSSL = false;
+        config.url = "localhost:1";
         config.ddMaxBatchLength = 2;
         writer = new DatadogLogsApiWriter(config);
 
@@ -82,6 +82,7 @@ public class DatadogLogsApiWriterTest {
         config = new DatadogLogsSinkConnectorConfig(props);
         config.ddMaxBatchLength = 1;
         config.useSSL = false;
+        config.url = "localhost:1";
         writer = new DatadogLogsApiWriter(config);
 
         records.add(new SinkRecord("someTopic", 0, null, "someKey", null, "someValue1", 0));
@@ -102,6 +103,7 @@ public class DatadogLogsApiWriterTest {
         config = new DatadogLogsSinkConnectorConfig(props);
         config.ddMaxBatchLength = 2;
         config.useSSL = false;
+        config.url = "localhost:1";
         writer = new DatadogLogsApiWriter(config);
 
         records.add(new SinkRecord("someTopic1", 0, null, "someKey", null, "someValue1", 0));
@@ -122,6 +124,7 @@ public class DatadogLogsApiWriterTest {
         props.put(DatadogLogsSinkConnectorConfig.DD_API_KEY, "invalidAPIKey");
         config = new DatadogLogsSinkConnectorConfig(props);
         config.useSSL = false;
+        config.url = "localhost:1";
         writer = new DatadogLogsApiWriter(config);
 
         records.add(new SinkRecord("someTopic", 0, null, "someKey", null, "someValue1", 0));
@@ -136,6 +139,7 @@ public class DatadogLogsApiWriterTest {
 
         config = new DatadogLogsSinkConnectorConfig(props);
         config.useSSL = false;
+        config.url = "localhost:1";
         writer = new DatadogLogsApiWriter(config);
 
         records.add(new SinkRecord("someTopic", 0, null, "someKey", null, "someValue1", 0));
@@ -155,6 +159,7 @@ public class DatadogLogsApiWriterTest {
 
         config = new DatadogLogsSinkConnectorConfig(props);
         config.useSSL = false;
+        config.url = "localhost:1";
         config.ddMaxBatchLength = 1;
         writer = new DatadogLogsApiWriter(config);
 

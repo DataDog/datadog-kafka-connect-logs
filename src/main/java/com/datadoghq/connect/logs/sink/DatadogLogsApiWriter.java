@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -70,8 +72,6 @@ public class DatadogLogsApiWriter {
         URL url = new URL(
                 protocol
                         + config.url
-                        + ":"
-                        + config.port.toString()
                         + "/v1/input/"
                         + config.ddApiKey
         );
@@ -114,7 +114,13 @@ public class DatadogLogsApiWriter {
     }
 
     private void sendRequest(JsonObject content, URL url) throws IOException {
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        HttpURLConnection con;
+        if (!config.proxyURL.isEmpty()) {
+            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(config.proxyURL, config.proxyPort));
+            con = (HttpURLConnection) url.openConnection(proxy);
+        } else {
+            con = (HttpURLConnection) url.openConnection();
+        }
         con.setDoOutput(true);
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/json");

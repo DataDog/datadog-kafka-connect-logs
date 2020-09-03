@@ -23,8 +23,8 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     public static final String DD_SERVICE = "datadog.service";
     public static final String DD_HOSTNAME = "datadog.hostname";
     public static final String DD_API_KEY = "datadog.api_key";
-    public static final String URL = "datadog.proxy.url";
-    public static final String PORT = "datadog.proxy.port";
+    public static final String PROXY_URL = "datadog.proxy.url";
+    public static final String PROXY_PORT = "datadog.proxy.port";
     public static final String MAX_RETRIES = "datadog.retry.max";
     public static final String RETRY_BACKOFF_MS = "datadog.retry.backoff_ms";
 
@@ -34,13 +34,14 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
     // Only for testing
     public Boolean useSSL = true;
+    public String url = "http-intake.logs.datadoghq.com:443";
 
     public final String ddTags;
     public final String ddService;
     public final String ddHostname;
     public final String ddApiKey;
-    public final String url;
-    public final Integer port;
+    public final String proxyURL;
+    public final Integer proxyPort;
     public final Integer retryMax;
     public final Integer retryBackoffMs;
 
@@ -52,8 +53,8 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         ddService = getString(DD_SERVICE);
         ddHostname = getString(DD_HOSTNAME);
         ddApiKey = getPasswordValue(DD_API_KEY);
-        url = getString(URL);
-        port = getInt(PORT);
+        proxyURL = getString(PROXY_URL);
+        proxyPort = getInt(PROXY_PORT);
         retryMax = getInt(MAX_RETRIES);
         retryBackoffMs = getInt(RETRY_BACKOFF_MS);
         validateConfig();
@@ -125,17 +126,17 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         final String group = "Datadog Proxy";
 
         configDef.define(
-                URL,
+                PROXY_URL,
                 Type.STRING,
-                "http-intake.logs.datadoghq.com",
+                "",
                 Importance.LOW,
                 "Proxy endpoint when logs are not directly forwarded to Datadog.",
                 group,
                 ++orderInGroup,
                 Width.LONG,
-                "URL"
+                "Proxy URL"
         ).define(
-                PORT,
+                PROXY_PORT,
                 Type.INT,
                 443,
                 Range.between(1, 65535),
