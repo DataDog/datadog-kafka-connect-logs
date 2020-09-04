@@ -206,7 +206,8 @@
 
                             <supportProviderName>Datadog</supportProviderName>
                             <supportSummary>
-                                Support is provided as best effort only. Please register any issues in the github project.
+                                Support in Github issues is provided as best effort. Support for Datadog users is
+                                given through Datadog's regular support channels.
                             </supportSummary>
                             <supportUrl>https://github.com/DataDog/datadog-kafka-connect-logs/issues</supportUrl>
                             <supportLogo>logos/datadog.png</supportLogo>
