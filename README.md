@@ -91,7 +91,7 @@ A REST call can be executed against one of the cluster instances, and the config
 | `datadog.tags` | Tags associated with your logs in a comma separated tag:value format.||
 | `datadog.service` | The name of the application or service generating the log events.||
 | `datadog.hostname` | The name of the originating host of the log.||
-| `datadog.proxy.url` | Proxy endpoint when logs are not directly forwarded to Datadog.| `http-intake.logs.datadoghq.com` ||
+| `datadog.proxy.url` | Proxy endpoint when logs are not directly forwarded to Datadog.| `""` ||
 | `datadog.proxy.port` | Proxy port when logs are not directly forwarded to Datadog.| `443` ||
 | `datadog.retry.max` | The number of retries before the output plugin stops.| `5` ||
 | `datadog.retry.backoff_ms` | The time in milliseconds to wait following an error before a retry attempt is made.| `3000` ||
