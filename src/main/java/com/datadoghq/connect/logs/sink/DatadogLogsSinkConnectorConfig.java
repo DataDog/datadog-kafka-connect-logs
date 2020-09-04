@@ -128,7 +128,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         configDef.define(
                 PROXY_URL,
                 Type.STRING,
-                "",
+                null,
                 Importance.LOW,
                 "Proxy endpoint when logs are not directly forwarded to Datadog.",
                 group,
@@ -138,7 +138,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         ).define(
                 PROXY_PORT,
                 Type.INT,
-                443,
+                null,
                 Range.between(1, 65535),
                 Importance.LOW,
                 "Proxy port when logs are not directly forwarded to Datadog.",
