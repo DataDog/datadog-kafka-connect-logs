@@ -1,0 +1,13 @@
+{
+  "name": "DatagenJSONSchema",
+  "config": {
+    "connector.class": "io.confluent.kafka.connect.datagen.DatagenConnector",
+    "tasks.max": "1",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "io.confluent.connect.json.JsonSchemaConverter",
+    "datadog.tags": "type:json-schema",
+    "kafka.topic": "test-json-schema",
+    "quickstart": "users",
+    "value.converter.schema.registry.url": "http://localhost:8081"
+  }
+}

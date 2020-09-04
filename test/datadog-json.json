@@ -1,0 +1,15 @@
+{
+  "name": "DatadogJSON",
+  "config": {
+    "connector.class": "com.datadoghq.connect.logs.DatadogLogsSinkConnector",
+    "tasks.max": "1",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "topics": "test-json",
+    "datadog.api_key": "**************",
+    "datadog.service": "kafka-json",
+    "datadog.hostname": "berzan-test",
+    "datadog.tags": "type:json",
+    "value.converter.schemas.enable": "false"
+  }
+}
