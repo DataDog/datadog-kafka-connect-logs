@@ -119,6 +119,14 @@ transforms.addExtraField.static.value=extraValue
 Now if you restart the sink connector and send some more test messages, each new record should have a `extraField` field 
 with value `value`. For more in-depth video, see [confluent's documentation](https://docs.confluent.io/current/connect/transforms/index.html).
 
+## System Tests
+
+In the `/test` directory there are some `.json` configuration files to make it easy to create Connectors for testing in 
+[Confluent Platform](https://docs.confluent.io/current/quickstart/ce-quickstart.html). Testing can be done using the 
+[Confluent Kafka Datagen Connector](https://github.com/confluentinc/kafka-connect-datagen) to create sample data and 
+adding the Datadog Logs Connector after installing it. Confluent Platform provides an easy way to spin up a 
+batteries-included Kafka environment for local testing.
+
 ## License
 
 Datadog Kafka Connect Logs is licensed under the Apache License 2.0. Details can be found in the file LICENSE.
