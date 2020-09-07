@@ -60,13 +60,12 @@ public class DatadogLogsApiWriter {
     }
 
     private void sendBatch(String topic) throws IOException {
-        JsonArray message = formatBatch(batches.get(topic));
-        if (message.size() == 0) {
+        JsonArray content = formatBatch(topic);
+        if (content.size() == 0) {
             log.debug("Nothing to send; Skipping the HTTP request.");
             return;
         }
 
-        JsonObject content = populateMetadata(topic, message);
         String protocol = config.useSSL ? "https://" : "http://";
 
         URL url = new URL(
@@ -80,7 +79,37 @@ public class DatadogLogsApiWriter {
         sendRequest(content, url);
     }
 
-    private JsonObject populateMetadata(String topic, JsonArray message) {
+    private JsonArray formatBatch(String topic) {
+        List<SinkRecord> sinkRecords = batches.get(topic);
+        JsonArray batchRecords = new JsonArray();
+
+        for (SinkRecord record : sinkRecords) {
+            if (record == null) {
+                continue;
+            }
+
+            if (record.value() == null) {
+                continue;
+            }
+
+            JsonElement recordJSON = recordToJSON(record);
+            JsonObject message = populateMetadata(topic, recordJSON);
+            batchRecords.add(message);
+        }
+
+        return batchRecords;
+    }
+
+    private JsonElement recordToJSON(SinkRecord record) {
+        JsonConverter jsonConverter = new JsonConverter();
+        jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
+
+        byte[] rawJSONPayload = jsonConverter.fromConnectData(record.topic(), record.valueSchema(), record.value());
+        String jsonPayload = new String(rawJSONPayload, StandardCharsets.UTF_8);
+        return new Gson().fromJson(jsonPayload, JsonElement.class);
+    }
+
+    private JsonObject populateMetadata(String topic, JsonElement message) {
         JsonObject content = new JsonObject();
         String tags = "topic:" + topic;
         content.add("message", message);
@@ -102,20 +131,9 @@ public class DatadogLogsApiWriter {
         return content;
     }
 
-    private String getOutput(InputStream input) throws IOException {
-        ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int length;
-        while ((length = input.read(buffer)) != -1) {
-            errorOutput.write(buffer, 0, length);
-        }
-
-        return errorOutput.toString(StandardCharsets.UTF_8.name());
-    }
-
-    private void sendRequest(JsonObject content, URL url) throws IOException {
+    private void sendRequest(JsonArray content, URL url) throws IOException {
         HttpURLConnection con;
-        if (!config.proxyURL.isEmpty()) {
+        if (config.proxyURL != null) {
             Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(config.proxyURL, config.proxyPort));
             con = (HttpURLConnection) url.openConnection(proxy);
         } else {
@@ -127,7 +145,6 @@ public class DatadogLogsApiWriter {
         con.setRequestProperty("Content-Encoding", "gzip");
         String requestContent = content.toString();
         byte[] compressedPayload = compress(requestContent);
-
 
         DataOutputStream output = new DataOutputStream(con.getOutputStream());
         output.write(compressedPayload);
@@ -153,34 +170,6 @@ public class DatadogLogsApiWriter {
         con.disconnect();
     }
 
-    private JsonArray formatBatch(List<SinkRecord> sinkRecords) {
-        JsonArray batchRecords = new JsonArray();
-
-        for (SinkRecord record : sinkRecords) {
-            if (record == null) {
-                continue;
-            }
-
-            if (record.value() == null) {
-                continue;
-            }
-
-            JsonElement recordJSON = recordToJSON(record);
-            batchRecords.add(recordJSON);
-        }
-
-        return batchRecords;
-    }
-
-    private JsonElement recordToJSON(SinkRecord record) {
-        JsonConverter jsonConverter = new JsonConverter();
-        jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
-
-        byte[] rawJSONPayload = jsonConverter.fromConnectData(record.topic(), record.valueSchema(), record.value());
-        String jsonPayload = new String(rawJSONPayload, StandardCharsets.UTF_8);
-        return new Gson().fromJson(jsonPayload, JsonElement.class);
-    }
-
     private byte[] compress(String str) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream(str.length());
         GZIPOutputStream gos = new GZIPOutputStream(os);
@@ -189,4 +178,16 @@ public class DatadogLogsApiWriter {
         gos.close();
         return os.toByteArray();
     }
+
+    private String getOutput(InputStream input) throws IOException {
+        ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = input.read(buffer)) != -1) {
+            errorOutput.write(buffer, 0, length);
+        }
+
+        return errorOutput.toString(StandardCharsets.UTF_8.name());
+    }
+
 }

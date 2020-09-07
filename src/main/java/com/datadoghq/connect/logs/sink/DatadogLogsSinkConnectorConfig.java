@@ -29,12 +29,13 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     public static final String RETRY_BACKOFF_MS = "datadog.retry.backoff_ms";
 
     // Respect limit documented at https://docs.datadoghq.com/api/?lang=bash#logs
-    public Integer ddMaxBatchLength = 500;
+    public final Integer ddMaxBatchLength;
+    public final Integer ddMaxBatchSize = 2560000;
     public final String ddSource = "kafka-connect";
 
     // Only for testing
-    public Boolean useSSL = true;
-    public String url = "http-intake.logs.datadoghq.com:443";
+    public final Boolean useSSL;
+    public final String url;
 
     public final String ddTags;
     public final String ddService;
@@ -57,6 +58,25 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         proxyPort = getInt(PROXY_PORT);
         retryMax = getInt(MAX_RETRIES);
         retryBackoffMs = getInt(RETRY_BACKOFF_MS);
+        useSSL = true;
+        url = "http-intake.logs.datadoghq.com:443";
+        ddMaxBatchLength = 500;
+        validateConfig();
+    }
+
+    public DatadogLogsSinkConnectorConfig(Boolean useSSL, String url, Integer ddMaxBatchLength, Map<String, String> props) {
+        super(baseConfigDef(), props);
+        ddTags = getTags(DD_TAGS);
+        ddService = getString(DD_SERVICE);
+        ddHostname = getString(DD_HOSTNAME);
+        ddApiKey = getPasswordValue(DD_API_KEY);
+        proxyURL = getString(PROXY_URL);
+        proxyPort = getInt(PROXY_PORT);
+        retryMax = getInt(MAX_RETRIES);
+        retryBackoffMs = getInt(RETRY_BACKOFF_MS);
+        this.useSSL = useSSL;
+        this.url = url;
+        this.ddMaxBatchLength = ddMaxBatchLength;
         validateConfig();
     }
 
@@ -139,7 +159,6 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
                 PROXY_PORT,
                 Type.INT,
                 null,
-                Range.between(1, 65535),
                 Importance.LOW,
                 "Proxy port when logs are not directly forwarded to Datadog.",
                 group,
