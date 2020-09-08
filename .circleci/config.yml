@@ -4,7 +4,9 @@ orbs:
   maven: circleci/maven@0.0.12
 
 workflows:
-  build_and_test:
+  maven_test:
     jobs:
-      - maven/test
-      - run: process_test_results
+      build_and_test:
+        steps:
+          - maven/test
+          - maven/process_test_results
