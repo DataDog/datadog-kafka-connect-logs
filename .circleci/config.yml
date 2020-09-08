@@ -6,6 +6,7 @@ orbs:
 workflows:
   maven_test:
     jobs:
-      - machine:
-          image: ubuntu-1604:201903-01
-      - maven/test # checkout, build, test, and upload test results
+      build_and_test:
+        - machine:
+            image: ubuntu-1604:201903-01
+        - maven/test # checkout, build, test, and upload test results
