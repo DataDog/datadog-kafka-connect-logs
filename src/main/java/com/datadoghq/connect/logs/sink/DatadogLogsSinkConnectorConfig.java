@@ -30,7 +30,6 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
     // Respect limit documented at https://docs.datadoghq.com/api/?lang=bash#logs
     public final Integer ddMaxBatchLength;
-    public final Integer ddMaxBatchSize = 2560000;
     public final String ddSource = "kafka-connect";
 
     // Only for testing
