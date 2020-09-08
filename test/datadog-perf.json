@@ -1,0 +1,16 @@
+{
+  "name": "DatadogPerf",
+  "config": {
+    "connector.class": "com.datadoghq.connect.logs.DatadogLogsSinkConnector",
+    "tasks.max": "10",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+    "topics": "perf-test",
+    "datadog.api_key": "**********",
+    "datadog.tags": "",
+    "datadog.service": "kafka-perf",
+    "datadog.hostname": "berzan-test",
+    "value.converter.schema.registry.url": "http://localhost:8081",
+    "value.converter.schemas.enable": "false"
+  }
+}

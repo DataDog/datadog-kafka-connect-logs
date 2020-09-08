@@ -1,0 +1,12 @@
+{
+  "name": "DatagenJSON",
+  "config": {
+    "connector.class": "io.confluent.kafka.connect.datagen.DatagenConnector",
+    "tasks.max": "1",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "kafka.topic": "test-json",
+    "value.converter.schemas.enable": "false",
+    "quickstart": "users"
+  }
+}

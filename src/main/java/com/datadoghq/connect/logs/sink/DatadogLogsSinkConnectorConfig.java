@@ -23,24 +23,26 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     public static final String DD_SERVICE = "datadog.service";
     public static final String DD_HOSTNAME = "datadog.hostname";
     public static final String DD_API_KEY = "datadog.api_key";
-    public static final String URL = "datadog.proxy.url";
-    public static final String PORT = "datadog.proxy.port";
+    public static final String PROXY_URL = "datadog.proxy.url";
+    public static final String PROXY_PORT = "datadog.proxy.port";
     public static final String MAX_RETRIES = "datadog.retry.max";
     public static final String RETRY_BACKOFF_MS = "datadog.retry.backoff_ms";
 
     // Respect limit documented at https://docs.datadoghq.com/api/?lang=bash#logs
-    public Integer ddMaxBatchLength = 500;
+    public final Integer ddMaxBatchLength;
+    public final Integer ddMaxBatchSize = 2560000;
     public final String ddSource = "kafka-connect";
 
     // Only for testing
-    public Boolean useSSL = true;
+    public final Boolean useSSL;
+    public final String url;
 
     public final String ddTags;
     public final String ddService;
     public final String ddHostname;
     public final String ddApiKey;
-    public final String url;
-    public final Integer port;
+    public final String proxyURL;
+    public final Integer proxyPort;
     public final Integer retryMax;
     public final Integer retryBackoffMs;
 
@@ -52,10 +54,29 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         ddService = getString(DD_SERVICE);
         ddHostname = getString(DD_HOSTNAME);
         ddApiKey = getPasswordValue(DD_API_KEY);
-        url = getString(URL);
-        port = getInt(PORT);
+        proxyURL = getString(PROXY_URL);
+        proxyPort = getInt(PROXY_PORT);
         retryMax = getInt(MAX_RETRIES);
         retryBackoffMs = getInt(RETRY_BACKOFF_MS);
+        useSSL = true;
+        url = "http-intake.logs.datad0g.com:443";
+        ddMaxBatchLength = 500;
+        validateConfig();
+    }
+
+    public DatadogLogsSinkConnectorConfig(Boolean useSSL, String url, Integer ddMaxBatchLength, Map<String, String> props) {
+        super(baseConfigDef(), props);
+        ddTags = getTags(DD_TAGS);
+        ddService = getString(DD_SERVICE);
+        ddHostname = getString(DD_HOSTNAME);
+        ddApiKey = getPasswordValue(DD_API_KEY);
+        proxyURL = getString(PROXY_URL);
+        proxyPort = getInt(PROXY_PORT);
+        retryMax = getInt(MAX_RETRIES);
+        retryBackoffMs = getInt(RETRY_BACKOFF_MS);
+        this.useSSL = useSSL;
+        this.url = url;
+        this.ddMaxBatchLength = ddMaxBatchLength;
         validateConfig();
     }
 
@@ -75,7 +96,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
     private static void addMetadataConfigs(ConfigDef configDef) {
         int orderInGroup = 0;
-        final String group = "Metadata";
+        final String group = "Datadog Metadata";
 
         configDef.define(
                 DD_API_KEY,
@@ -122,23 +143,22 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
     private static void addProxyConfigs(ConfigDef configDef) {
         int orderInGroup = 0;
-        final String group = "Proxy";
+        final String group = "Datadog Proxy";
 
         configDef.define(
-                URL,
+                PROXY_URL,
                 Type.STRING,
-                "http-intake.logs.datadoghq.com",
+                null,
                 Importance.LOW,
                 "Proxy endpoint when logs are not directly forwarded to Datadog.",
                 group,
                 ++orderInGroup,
                 Width.LONG,
-                "URL"
+                "Proxy URL"
         ).define(
-                PORT,
+                PROXY_PORT,
                 Type.INT,
-                443,
-                Range.between(1, 65535),
+                null,
                 Importance.LOW,
                 "Proxy port when logs are not directly forwarded to Datadog.",
                 group,
@@ -150,7 +170,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
     private static void addRetryConfigs(ConfigDef configDef) {
         int orderInGroup = 0;
-        final String group = "Retry";
+        final String group = "Datadog Retry";
 
         configDef.define(
                 MAX_RETRIES,

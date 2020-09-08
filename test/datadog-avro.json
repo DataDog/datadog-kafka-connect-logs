@@ -1,0 +1,16 @@
+{
+  "name": "DatadogAvro",
+  "config": {
+    "connector.class": "com.datadoghq.connect.logs.DatadogLogsSinkConnector",
+    "tasks.max": "1",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "io.confluent.connect.avro.AvroConverter",
+    "topics": "test-avro",
+    "datadog.api_key": "********",
+    "datadog.tags": "type:avro",
+    "datadog.service": "kafka-avro",
+    "datadog.hostname": "berzan-test",
+    "value.converter.schemas.enable": "false",
+    "value.converter.schema.registry.url": "http://localhost:8081"
+  }
+}

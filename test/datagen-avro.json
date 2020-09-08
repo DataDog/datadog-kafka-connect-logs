@@ -1,0 +1,13 @@
+{
+  "name": "DatagenAvro",
+  "config": {
+    "connector.class": "io.confluent.kafka.connect.datagen.DatagenConnector",
+    "value.converter.schema.registry.url": "http://localhost:8081",
+    "tasks.max": "1",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "io.confluent.connect.avro.AvroConverter",
+    "kafka.topic": "test-avro",
+    "quickstart": "stock_trades",
+    "value.converter.schemas.enable": "false"
+  }
+}

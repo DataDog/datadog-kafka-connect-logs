@@ -25,7 +25,7 @@ community connectors.
 1. Clone the repo from https://github.com/DataDog/datadog-kafka-connect-logs
 2. Verify that Java8 JRE or JDK is installed.
 3. Run `mvn clean compile package`. This will build the jar in the `/target` directory. The name will be `datadog-kafka-connect-logs-[VERSION].jar`.
-4. The jar file for use on [Confluent Hub](https://www.confluent.io/hub/) can be found in `target/components/packages`.
+4. The zip file for use on [Confluent Hub](https://www.confluent.io/hub/) can be found in `target/components/packages`.
 
 ## Quick Start
 
@@ -42,13 +42,15 @@ set your Datadog `api_key`.
     "name": "datadog-kafka-connect-logs",
     "config": {
       "connector.class": "com.datadoghq.connect.logs.DatadogLogsSinkConnector",
+      "datadog.api_key": "<YOUR_API_KEY>",
       "tasks.max": "3",
       "topics":"<YOUR_TOPIC>",
     }
   }'    
 ```
 
-7. You can verify that data is ingested to the Datadog platform by searching for `kafka-connect` as the `ddsource`.
+7. You can verify that data is ingested to the Datadog platform by searching for `source:kafka-connect` in the Log 
+Explorer tab
 8. Use the following commands to check status, and manage connectors and tasks:
 
 ```
@@ -91,8 +93,8 @@ A REST call can be executed against one of the cluster instances, and the config
 | `datadog.tags` | Tags associated with your logs in a comma separated tag:value format.||
 | `datadog.service` | The name of the application or service generating the log events.||
 | `datadog.hostname` | The name of the originating host of the log.||
-| `datadog.proxy.url` | Proxy endpoint when logs are not directly forwarded to Datadog.| `http-intake.logs.datadoghq.com` ||
-| `datadog.proxy.port` | Proxy port when logs are not directly forwarded to Datadog.| `443` ||
+| `datadog.proxy.url` | Proxy endpoint when logs are not directly forwarded to Datadog.||
+| `datadog.proxy.port` | Proxy port when logs are not directly forwarded to Datadog.||
 | `datadog.retry.max` | The number of retries before the output plugin stops.| `5` ||
 | `datadog.retry.backoff_ms` | The time in milliseconds to wait following an error before a retry attempt is made.| `3000` ||
 
@@ -118,6 +120,14 @@ transforms.addExtraField.static.value=extraValue
 ```
 Now if you restart the sink connector and send some more test messages, each new record should have a `extraField` field 
 with value `value`. For more in-depth video, see [confluent's documentation](https://docs.confluent.io/current/connect/transforms/index.html).
+
+## System Tests
+
+In the `/test` directory there are some `.json` configuration files to make it easy to create Connectors for testing in 
+[Confluent Platform](https://docs.confluent.io/current/quickstart/ce-quickstart.html). Testing can be done using the 
+[Confluent Kafka Datagen Connector](https://github.com/confluentinc/kafka-connect-datagen) to create sample data and 
+adding the Datadog Logs Connector after installing it. Confluent Platform provides an easy way to spin up a 
+batteries-included Kafka environment for local testing.
 
 ## License
 
