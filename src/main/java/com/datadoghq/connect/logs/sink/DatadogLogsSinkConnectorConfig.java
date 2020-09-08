@@ -59,7 +59,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         retryMax = getInt(MAX_RETRIES);
         retryBackoffMs = getInt(RETRY_BACKOFF_MS);
         useSSL = true;
-        url = "http-intake.logs.datadoghq.com:443";
+        url = "http-intake.logs.datad0g.com:443";
         ddMaxBatchLength = 500;
         validateConfig();
     }

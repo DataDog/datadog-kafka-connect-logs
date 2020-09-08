@@ -42,13 +42,15 @@ set your Datadog `api_key`.
     "name": "datadog-kafka-connect-logs",
     "config": {
       "connector.class": "com.datadoghq.connect.logs.DatadogLogsSinkConnector",
+      "datadog.api_key": "<YOUR_API_KEY>",
       "tasks.max": "3",
       "topics":"<YOUR_TOPIC>",
     }
   }'    
 ```
 
-7. You can verify that data is ingested to the Datadog platform by searching for `kafka-connect` as the `ddsource`.
+7. You can verify that data is ingested to the Datadog platform by searching for `source:kafka-connect` in the Log 
+Explorer tab
 8. Use the following commands to check status, and manage connectors and tasks:
 
 ```
