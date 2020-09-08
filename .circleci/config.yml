@@ -5,8 +5,5 @@ orbs:
 
 workflows:
   maven_test:
-    jobs:
-      build_and_test:
-        steps:
-          - maven/test
-          - maven/process_test_results
+    - maven/test
+    - maven/process_test_results
