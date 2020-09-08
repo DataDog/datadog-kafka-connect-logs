@@ -34,7 +34,7 @@ public class RestHelper extends HttpServlet {
         handler.addServlet(testServ,"/v1/input/" + API_KEY);
 
         server.setHandler(handler);
-        connector.setPort(1);
+        connector.setPort(8080);
         server.setConnectors(new Connector[]{connector});
 
         server.start();
