@@ -24,10 +24,14 @@ import javax.ws.rs.core.Response;
 public class DatadogLogsApiWriter {
     private final DatadogLogsSinkConnectorConfig config;
     private static final Logger log = LoggerFactory.getLogger(DatadogLogsApiWriter.class);
-    private Map<String, List<SinkRecord>> batches = new HashMap<>();
+    private final Map<String, List<SinkRecord>> batches;
+    private final JsonConverter jsonConverter;
 
     public DatadogLogsApiWriter(DatadogLogsSinkConnectorConfig config) {
         this.config = config;
+        this.batches = new HashMap<>();
+        this.jsonConverter = new JsonConverter();
+        jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
     }
 
     /**
@@ -102,8 +106,6 @@ public class DatadogLogsApiWriter {
     }
 
     private JsonElement recordToJSON(SinkRecord record) {
-        JsonConverter jsonConverter = new JsonConverter();
-        jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
 
         byte[] rawJSONPayload = jsonConverter.fromConnectData(record.topic(), record.valueSchema(), record.value());
         String jsonPayload = new String(rawJSONPayload, StandardCharsets.UTF_8);
