@@ -3,18 +3,8 @@ version: 2.1
 orbs:
   maven: circleci/maven@0.0.12
 
-jobs:
-  build_and_test:
-    steps:
-      - maven/test
-  upload_report:
-    steps:
-      - run: process_test_results
-
 workflows:
   build_and_test:
     jobs:
-      - build_and_test
-      - upload_report:
-          requires:
-            - build_and_test
+      - maven/test
+      - run: process_test_results
