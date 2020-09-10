@@ -18,17 +18,20 @@ import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.GZIPOutputStream;
 import javax.ws.rs.core.Response;
 
 public class DatadogLogsApiWriter {
     private final DatadogLogsSinkConnectorConfig config;
     private static final Logger log = LoggerFactory.getLogger(DatadogLogsApiWriter.class);
-    private Map<String, List<SinkRecord>> batches = new ConcurrentHashMap<>();
+    private final Map<String, List<SinkRecord>> batches;
+    private final JsonConverter jsonConverter;
 
     public DatadogLogsApiWriter(DatadogLogsSinkConnectorConfig config) {
         this.config = config;
+        this.batches = new HashMap<>();
+        this.jsonConverter = new JsonConverter();
+        jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
     }
 
     /**
@@ -45,6 +48,7 @@ public class DatadogLogsApiWriter {
             }
             if (batches.get(record.topic()).size() >= config.ddMaxBatchLength) {
                 sendBatch(record.topic());
+                batches.remove(record.topic());
             }
         }
 
@@ -57,6 +61,8 @@ public class DatadogLogsApiWriter {
         for(Map.Entry<String,List<SinkRecord>> entry: batches.entrySet()) {
             sendBatch(entry.getKey());
         }
+
+        batches.clear();
     }
 
     private void sendBatch(String topic) throws IOException {
@@ -75,7 +81,6 @@ public class DatadogLogsApiWriter {
                         + config.ddApiKey
         );
 
-        batches.remove(topic);
         sendRequest(content, url);
     }
 
@@ -101,8 +106,6 @@ public class DatadogLogsApiWriter {
     }
 
     private JsonElement recordToJSON(SinkRecord record) {
-        JsonConverter jsonConverter = new JsonConverter();
-        jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
 
         byte[] rawJSONPayload = jsonConverter.fromConnectData(record.topic(), record.valueSchema(), record.value());
         String jsonPayload = new String(rawJSONPayload, StandardCharsets.UTF_8);
