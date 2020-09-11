@@ -5,6 +5,7 @@ This product includes software developed at Datadog (https://www.datadoghq.com/)
 
 package com.datadoghq.connect.logs.sink;
 
+import com.datadoghq.connect.logs.util.Telemetry;
 import com.google.gson.*;
 import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
@@ -26,12 +27,14 @@ public class DatadogLogsApiWriter {
     private static final Logger log = LoggerFactory.getLogger(DatadogLogsApiWriter.class);
     private final Map<String, List<SinkRecord>> batches;
     private final JsonConverter jsonConverter;
+    private final Telemetry telemetry;
 
     public DatadogLogsApiWriter(DatadogLogsSinkConnectorConfig config) {
         this.config = config;
         this.batches = new HashMap<>();
         this.jsonConverter = new JsonConverter();
         jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
+        this.telemetry = new Telemetry();
     }
 
     /**
@@ -86,6 +89,7 @@ public class DatadogLogsApiWriter {
 
     private JsonArray formatBatch(String topic) {
         List<SinkRecord> sinkRecords = batches.get(topic);
+        telemetry.recordBatchSize(sinkRecords.size());
         JsonArray batchRecords = new JsonArray();
 
         for (SinkRecord record : sinkRecords) {
@@ -170,6 +174,8 @@ public class DatadogLogsApiWriter {
         String response = getOutput(con.getInputStream());
 
         log.debug("Response content: " + response);
+
+        telemetry.recordBatchesSent();
         con.disconnect();
     }
 
