@@ -106,7 +106,6 @@ public class DatadogLogsApiWriter {
     }
 
     private JsonElement recordToJSON(SinkRecord record) {
-
         byte[] rawJSONPayload = jsonConverter.fromConnectData(record.topic(), record.valueSchema(), record.value());
         String jsonPayload = new String(rawJSONPayload, StandardCharsets.UTF_8);
         return new Gson().fromJson(jsonPayload, JsonElement.class);
@@ -135,6 +134,9 @@ public class DatadogLogsApiWriter {
     }
 
     private void sendRequest(JsonArray content, URL url) throws IOException {
+        String requestContent = content.toString();
+        byte[] compressedPayload = compress(requestContent);
+
         HttpURLConnection con;
         if (config.proxyURL != null) {
             Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(config.proxyURL, config.proxyPort));
@@ -146,8 +148,6 @@ public class DatadogLogsApiWriter {
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/json");
         con.setRequestProperty("Content-Encoding", "gzip");
-        String requestContent = content.toString();
-        byte[] compressedPayload = compress(requestContent);
 
         DataOutputStream output = new DataOutputStream(con.getOutputStream());
         output.write(compressedPayload);
