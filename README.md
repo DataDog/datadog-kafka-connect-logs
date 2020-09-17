@@ -121,13 +121,31 @@ transforms.addExtraField.static.value=extraValue
 Now if you restart the sink connector and send some more test messages, each new record should have a `extraField` field 
 with value `value`. For more in-depth video, see [confluent's documentation](https://docs.confluent.io/current/connect/transforms/index.html).
 
-## System Tests
+## Testing
 
-In the `/test` directory there are some `.json` configuration files to make it easy to create Connectors for testing in 
-[Confluent Platform](https://docs.confluent.io/current/quickstart/ce-quickstart.html). Testing can be done using the 
-[Confluent Kafka Datagen Connector](https://github.com/confluentinc/kafka-connect-datagen) to create sample data and 
-adding the Datadog Logs Connector after installing it. Confluent Platform provides an easy way to spin up a 
-batteries-included Kafka environment for local testing.
+### Unit Tests
+
+To run the supplied unit tests, run `mvn test` from the root of the project.
+
+### System Tests
+
+We use Confluent Platform for a batteries-included Kafka environment for local testing. Follow the guide 
+[here](https://docs.confluent.io/current/quickstart/ce-quickstart.html) to install the Confluent Platform.
+
+Then, install the [Confluent Kafka Datagen Connector](https://github.com/confluentinc/kafka-connect-datagen) to create 
+sample data of arbitrary types. Install this Datadog Logs Connector by running 
+`confluent-hub install target/components/packages/<connector-zip-file>`.
+
+In the `/test` directory there are some `.json` configuration files to make it easy to create Connectors. There are 
+configurations for both the Datagen Connector with various datatypes, as well as the Datadog Logs Connector. To the latter,
+you will need to add a valid Datadog API Key for once you upload the `.json` to Confluent Platform.
+
+Once your connectors are set up, you will be able to test them and see relevant data. For performance tests, you can also
+use the following command packaged with Confluent platform:
+
+```bash
+kafka-producer-perf-test --topic perf-test --num-records 2000000 --record-size 100 --throughput 25000 --producer-props bootstrap.servers=localhost:9092 --print-metrics true
+```
 
 ## License
 
