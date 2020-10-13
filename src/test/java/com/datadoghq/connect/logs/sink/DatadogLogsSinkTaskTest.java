@@ -52,6 +52,7 @@ public class DatadogLogsSinkTaskTest extends EasyMockSupport {
             @Override
             protected void initWriter() {
                 this.writer = mockWriter;
+                this.retryOverride = retryBackoffMs;
             }
         };
         task.initialize(ctx);

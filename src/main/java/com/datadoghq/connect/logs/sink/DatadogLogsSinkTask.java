@@ -5,6 +5,7 @@ This product includes software developed at Datadog (https://www.datadoghq.com/)
 
 package com.datadoghq.connect.logs.sink;
 
+import com.datadoghq.connect.logs.util.RetryUtil;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.errors.ConnectException;
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class DatadogLogsSinkTask extends SinkTask {
     private static final Logger log = LoggerFactory.getLogger(DatadogLogsSinkTask.class);
@@ -24,16 +26,32 @@ public class DatadogLogsSinkTask extends SinkTask {
     DatadogLogsApiWriter writer;
     int remainingRetries;
 
+    // Only for testing
+    public Integer retryOverride;
+
     @Override
     public void start(Map<String, String> settings) {
         log.info("Starting Sink Task.");
         config = new DatadogLogsSinkConnectorConfig(settings);
         initWriter();
+        logMaxRetryBackoffMs(config.retryMax, config.retryBackoffMs);
         remainingRetries = config.retryMax;
+    }
+
+    private void logMaxRetryBackoffMs(Integer retryMax, Integer retryBackoffMs) {
+        long maxRetryBackoffMs = RetryUtil.computeRetryWaitTimeInMillis(retryMax, retryBackoffMs);
+        if (maxRetryBackoffMs > RetryUtil.MAX_RETRY_TIME_MS) {
+            log.warn("This connector uses exponential backoff with jitter for retries, and using '{}={}' and '{}={}' " +
+                            "results in an impractical but possible maximum backoff time greater than {} hours.",
+                    DatadogLogsSinkConnectorConfig.MAX_RETRIES, retryMax,
+                    DatadogLogsSinkConnectorConfig.RETRY_BACKOFF_MS, retryBackoffMs,
+                    TimeUnit.MILLISECONDS.toHours(maxRetryBackoffMs));
+        }
     }
 
     protected void initWriter() {
         writer = new DatadogLogsApiWriter(config);
+        this.retryOverride = 0;
     }
 
     @Override
@@ -63,8 +81,15 @@ public class DatadogLogsSinkTask extends SinkTask {
                 throw new ConnectException(e);
             } else {
                 initWriter();
+                long sleepTimeMs = RetryUtil.computeRandomRetryWaitTimeInMillis(remainingRetries, config.retryBackoffMs);
                 remainingRetries--;
-                context.timeout(config.retryBackoffMs);
+
+                if (retryOverride > 0) {
+                    context.timeout(retryOverride);
+                } else {
+                    context.timeout(sleepTimeMs);
+                }
+
                 throw new RetriableException(e);
             }
         }
