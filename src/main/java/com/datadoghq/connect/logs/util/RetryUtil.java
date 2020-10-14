@@ -26,7 +26,7 @@ public class RetryUtil {
      * @param initialRetryBackoffMs the initial time to wait before retrying; assumed to be 0 if value is negative
      * @return the non-negative time in milliseconds to wait before the next retry attempt, or 0 if {@code initialRetryBackoffMs} is negative
      */
-    public static long computeRandomRetryWaitTimeInMillis(int retryAttempts, long initialRetryBackoffMs) {
+    public long computeRandomRetryWaitTimeInMillis(int retryAttempts, long initialRetryBackoffMs) {
         if (initialRetryBackoffMs < 0) return 0;
         if (retryAttempts < 0) return initialRetryBackoffMs;
         long maxRetryTime = computeRetryWaitTimeInMillis(retryAttempts, initialRetryBackoffMs);
@@ -41,7 +41,7 @@ public class RetryUtil {
      * @param initialRetryBackoffMs the initial time to wait before retrying; assumed to be 0 if value is negative
      * @return the non-negative time in milliseconds to wait before the next retry attempt, or 0 if {@code initialRetryBackoffMs} is negative
      */
-    public static long computeRetryWaitTimeInMillis(int retryAttempts, long initialRetryBackoffMs) {
+    public long computeRetryWaitTimeInMillis(int retryAttempts, long initialRetryBackoffMs) {
         if (initialRetryBackoffMs < 0) return 0;
         if (retryAttempts <= 0) return initialRetryBackoffMs;
         if (retryAttempts > 32) {
