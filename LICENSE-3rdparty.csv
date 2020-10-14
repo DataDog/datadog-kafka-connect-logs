@@ -11,4 +11,4 @@ jetty-servlet,org.eclipse.jetty,EPL-2.0,Copyright (c) 1995-2020 Mort Bay Consult
 junit,junit,EPL-1.0,
 maven-compiler-plugin,org.apache.maven.plugins,Apache-2.0,
 maven-shade-plugin,org.apache.maven.plugins,Apache-2.0,
-RetryUtils,com.datadoghq.connect.logs.util.RetryUtil,Apache-2.0,
+RetryUtils,io.confluent.connect.elasticsearch.RetryUtil,Confluent Community License,Copyright 2018 Confluent Inc.,

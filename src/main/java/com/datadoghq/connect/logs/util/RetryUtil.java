@@ -16,7 +16,7 @@ public class RetryUtil {
     /**
      * An arbitrary absolute maximum practical retry time.
      */
-    public static final long MAX_RETRY_TIME_MS = TimeUnit.HOURS.toMillis(24);
+    public static final long MAX_RETRY_TIME_MS = TimeUnit.MINUTES.toMillis(10);
 
     /**
      * Compute the time to sleep using exponential backoff with jitter. This method computes the normal exponential backoff
