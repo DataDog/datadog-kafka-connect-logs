@@ -5,7 +5,6 @@ This product includes software developed at Datadog (https://www.datadoghq.com/)
 
 package com.datadoghq.connect.logs.sink;
 
-import com.datadoghq.connect.logs.util.RetryUtil;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.errors.ConnectException;
@@ -17,20 +16,21 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 public class DatadogLogsSinkTask extends SinkTask {
     private static final Logger log = LoggerFactory.getLogger(DatadogLogsSinkTask.class);
+    private static final long MAX_RETRY_TIME_MS = TimeUnit.MINUTES.toMillis(10);
 
     DatadogLogsSinkConnectorConfig config;
     DatadogLogsApiWriter writer;
-    RetryUtil retryUtil;
     int remainingRetries;
 
     @Override
     public void start(Map<String, String> settings) {
         log.info("Starting Sink Task.");
         config = new DatadogLogsSinkConnectorConfig(settings);
-        retryUtil = new RetryUtil();
         initWriter();
         remainingRetries = config.retryMax;
     }
@@ -66,7 +66,7 @@ public class DatadogLogsSinkTask extends SinkTask {
                 throw new ConnectException(e);
             } else {
                 initWriter();
-                long sleepTimeMs = retryUtil.computeRandomRetryWaitTimeInMillis(
+                long sleepTimeMs = computeRetryWaitMs(
                         config.retryMax-remainingRetries,
                         config.retryBackoffMs
                 );
@@ -97,5 +97,15 @@ public class DatadogLogsSinkTask extends SinkTask {
     @Override
     public String version() {
         return getClass().getPackage().getImplementationVersion();
+    }
+
+    protected long computeRetryWaitMs(int retryAttempts, long retryBackoffMs) {
+        if (retryAttempts > 0 && retryAttempts <= 32) {
+            long waitDuration = retryBackoffMs << retryAttempts;
+            waitDuration = Math.min(waitDuration, MAX_RETRY_TIME_MS);
+            return ThreadLocalRandom.current().nextLong(0, waitDuration);
+        }
+
+        return retryBackoffMs;
     }
 }

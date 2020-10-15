@@ -5,7 +5,6 @@ This product includes software developed at Datadog (https://www.datadoghq.com/)
 
 package com.datadoghq.connect.logs.sink;
 
-import com.datadoghq.connect.logs.util.RetryUtil;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.errors.RetriableException;
 import org.apache.kafka.connect.sink.SinkRecord;
@@ -20,8 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.easymock.EasyMock.expectLastCall;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class DatadogLogsSinkTaskTest extends EasyMockSupport {
 
@@ -49,17 +47,15 @@ public class DatadogLogsSinkTaskTest extends EasyMockSupport {
         ctx.timeout(retryBackoffMs);
         expectLastCall().times(maxRetries);
 
-        RetryUtil mockRetryUtil = new RetryUtil() {
-            @Override
-            public long computeRandomRetryWaitTimeInMillis(int retryAttempts, long initialRetryBackoffMs) {
-                return retryBackoffMs;
-            }
-        };
         DatadogLogsSinkTask task = new DatadogLogsSinkTask() {
             @Override
             protected void initWriter() {
                 this.writer = mockWriter;
-                this.retryUtil = mockRetryUtil;
+            }
+
+            @Override
+            protected long computeRetryWaitMs(int retryAttempts, long retryBackoffMs) {
+                return retryBackoffMs;
             }
         };
         task.initialize(ctx);
