@@ -19,8 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.easymock.EasyMock.expectLastCall;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class DatadogLogsSinkTaskTest extends EasyMockSupport {
 
@@ -52,6 +51,11 @@ public class DatadogLogsSinkTaskTest extends EasyMockSupport {
             @Override
             protected void initWriter() {
                 this.writer = mockWriter;
+            }
+
+            @Override
+            protected long computeRetryWaitMs(int retryAttempts, long retryBackoffMs) {
+                return retryBackoffMs;
             }
         };
         task.initialize(ctx);

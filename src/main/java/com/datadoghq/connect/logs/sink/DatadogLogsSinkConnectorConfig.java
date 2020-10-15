@@ -185,7 +185,8 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
                 Type.INT,
                 3000,
                 Importance.LOW,
-                "The time in milliseconds to wait following an error before a retry attempt is made.",
+                "How long to wait in milliseconds before attempting the first retry of a failed indexing request. " +
+                        "Upon a failure, this connector may wait up to twice as long as the previous wait, up to the maximum number of retries.",
                 group,
                 ++orderInGroup,
                 Width.LONG,
