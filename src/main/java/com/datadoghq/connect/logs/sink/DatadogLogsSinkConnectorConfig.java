@@ -62,7 +62,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         validateConfig();
     }
 
-    public DatadogLogsSinkConnectorConfig(Boolean useSSL, String url, Map<String, String> props, Integer ddMaxBatchLength) {
+    public DatadogLogsSinkConnectorConfig(Boolean useSSL, String url, Integer ddMaxBatchLength, Map<String, String> props) {
         super(baseConfigDef(), props);
         ddTags = getTags(DD_TAGS);
         ddService = getString(DD_SERVICE);
