@@ -1,13 +1,19 @@
 # Datadog Kafka Connect Logs
 
-datadog-kafka-connect-logs is a [Kafka Connector](http://kafka.apache.org/documentation.html#connect) for sending 
-records from Kafka to the Datadog Event Intake API.
+`datadog-kafka-connect-logs` is a [Kafka Connector](http://kafka.apache.org/documentation.html#connect) for sending 
+records from Kafka as logs to the [Datadog Logs Intake API](https://docs.datadoghq.com/api/v1/logs/).
+
+It is a plugin meant to be installed on a [Kafka Connect Cluster](https://docs.confluent.io/current/connect/) running
+besides a [Kafka Broker](https://www.confluent.io/what-is-apache-kafka/).
 
 ## Requirements
 
 1. Kafka version 1.0.0 and above.
 2. Java 8 and above.
 3. Confluent Platform 4.0.x and above (optional).
+
+To install the plugin, one must have a working instance of Kafka Connect connected to a Kafka Broker. See also 
+[Confluent's](https://www.confluent.io/product/confluent-platform/) documentation for easily setting this up.
 
 ## Installation and Setup
 ### Install from Confluent Hub
@@ -24,18 +30,18 @@ community connectors.
 
 1. Clone the repo from https://github.com/DataDog/datadog-kafka-connect-logs
 2. Verify that Java8 JRE or JDK is installed.
-3. Run `mvn clean compile package`. This will build the jar in the `/target` directory. The name will be `datadog-kafka-connect-logs-[VERSION].jar`.
+3. Run `mvn clean compile package`. This will build the jar in the `/target` directory. The name will be 
+`datadog-kafka-connect-logs-[VERSION].jar`.
 4. The zip file for use on [Confluent Hub](https://www.confluent.io/hub/) can be found in `target/components/packages`.
 
 ## Quick Start
 
-1. [Start](https://kafka.apache.org/quickstart) your Kafka Cluster and confirm it is running.
-2. If this is a new install, create a test topic (eg: `perf`). Inject events into the topic. This can be done using the Kafka-bundled [kafka-console-producer](https://kafka.apache.org/quickstart#quickstart_send).
-3. Within your Kafka Connect deployment adjust the values for `bootstrap.servers` and `plugin.path` inside the `$KAFKA_HOME/config/connect-distributed.properties` file. `bootstrap.servers` should be configured to point to your Kafka Brokers. `plugin.path` should be configured to point to the install directory of your Kafka Connect Sink and Source Connectors.
-4. Place the jar file created by `mvn package` (`datadog-kafka-connect-logs-[VERSION].jar`) in or under the location specified in `plugin.path` 
-5. Run `.$KAFKA_HOME/bin/connect-distributed.sh $KAFKA_HOME/config/connect-distributed.properties` to start Kafka Connect.
-6. Run the following command to create connector tasks. Adjust `topics` to configure the Kafka topic to be ingested and
-set your Datadog `api_key`.
+1. To install the plugin, simply place the jar file created by `mvn package` (`datadog-kafka-connect-logs-[VERSION].jar`) 
+in or under the location specified in `plugin.path` . If you use Confluent Platform, simply run 
+`confluent-hub install target/components/packages/<connector-zip-file>`.
+2. Restart your Kafka Connect instance.
+3. Run the following command to manually create connector tasks. Adjust `topics` to configure the Kafka topic to be 
+ingested and set your Datadog `api_key`.
 
 ```
   curl localhost:8083/connectors -X POST -H "Content-Type: application/json" -d '{
