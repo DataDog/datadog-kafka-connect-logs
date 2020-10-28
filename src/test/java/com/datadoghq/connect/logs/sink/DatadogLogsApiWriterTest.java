@@ -115,7 +115,6 @@ public class DatadogLogsApiWriterTest {
         Assert.assertEquals("[{\"message\":\"someValue1\",\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic1\"}]", request2.getBody());
         Assert.assertEquals("[{\"message\":\"someValue2\",\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic2\"}]", request1.getBody());
     }
-    **/
 
     @Test(expected = IOException.class)
     public void writer_givenError_shouldThrowException() throws IOException {
