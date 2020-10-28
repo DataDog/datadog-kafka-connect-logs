@@ -14,6 +14,8 @@ import org.apache.kafka.connect.sink.SinkTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.*;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -25,6 +27,7 @@ public class DatadogLogsSinkTask extends SinkTask {
 
     DatadogLogsSinkConnectorConfig config;
     DatadogLogsApiWriter writer;
+    HttpURLConnection con;
     int remainingRetries;
 
     @Override
@@ -33,6 +36,13 @@ public class DatadogLogsSinkTask extends SinkTask {
         config = new DatadogLogsSinkConnectorConfig(settings);
         initWriter();
         remainingRetries = config.retryMax;
+
+        try {
+            con = createNewHTTPConnection(config);
+        } catch (IOException e) {
+            log.error("Error creating new HTTP connection {}", e.toString());
+            throw new ConnectException(e);
+        }
     }
 
     protected void initWriter() {
@@ -53,7 +63,7 @@ public class DatadogLogsSinkTask extends SinkTask {
         );
 
         try {
-            writer.write(records);
+            writer.write(records, con);
         } catch (Exception e) {
             log.warn(
                     "Write of {} records failed, remaining retries: {}",
@@ -87,6 +97,7 @@ public class DatadogLogsSinkTask extends SinkTask {
     @Override
     public void close(Collection<TopicPartition> partitions) {
         log.debug("Closing the task for topic partitions: {}", partitions);
+        con.disconnect();
     }
 
     @Override
@@ -107,5 +118,29 @@ public class DatadogLogsSinkTask extends SinkTask {
         }
 
         return retryBackoffMs;
+    }
+
+    protected HttpURLConnection createNewHTTPConnection(DatadogLogsSinkConnectorConfig config) throws IOException {
+        String protocol = config.useSSL ? "https://" : "http://";
+
+        URL url = new URL(
+                protocol
+                        + config.url
+                        + "/v1/input/"
+                        + config.ddApiKey
+        );
+
+        if (config.proxyURL != null) {
+            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(config.proxyURL, config.proxyPort));
+            con = (HttpURLConnection) url.openConnection(proxy);
+        } else {
+            con = (HttpURLConnection) url.openConnection();
+        }
+        con.setDoOutput(true);
+        con.setRequestMethod("POST");
+        con.setRequestProperty("Content-Type", "application/json");
+        con.setRequestProperty("Content-Encoding", "gzip");
+
+        return con;
     }
 }

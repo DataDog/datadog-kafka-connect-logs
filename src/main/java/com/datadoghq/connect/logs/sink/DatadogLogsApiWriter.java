@@ -13,9 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.zip.GZIPOutputStream;
@@ -37,9 +34,10 @@ public class DatadogLogsApiWriter {
     /**
      * Writes records to the Datadog Logs API.
      * @param records to be written from the Source Broker to the Datadog Logs API.
+     * @param con connection to the Datadog Logs API for this task.
      * @throws IOException may be thrown if the connection to the API fails.
      */
-    public void write(Collection<SinkRecord> records) throws IOException {
+    public void write(Collection<SinkRecord> records, HttpURLConnection con) throws IOException {
         for (SinkRecord record : records) {
             if (!batches.containsKey(record.topic())) {
                 batches.put(record.topic(), new ArrayList<> (Collections.singletonList(record)));
@@ -47,41 +45,33 @@ public class DatadogLogsApiWriter {
                 batches.get(record.topic()).add(record);
             }
             if (batches.get(record.topic()).size() >= config.ddMaxBatchLength) {
-                sendBatch(record.topic());
+                sendBatch(record.topic(), con);
                 batches.remove(record.topic());
             }
         }
 
         // Flush remaining records
-        flushBatches();
+        flushBatches(con);
     }
 
-    private void flushBatches() throws IOException {
+    private void flushBatches(HttpURLConnection con) throws IOException {
         // send any outstanding batches
         for(Map.Entry<String,List<SinkRecord>> entry: batches.entrySet()) {
-            sendBatch(entry.getKey());
+            sendBatch(entry.getKey(), con);
         }
 
         batches.clear();
     }
 
-    private void sendBatch(String topic) throws IOException {
+    private void sendBatch(String topic, HttpURLConnection con) throws IOException {
         JsonArray content = formatBatch(topic);
         if (content.size() == 0) {
             log.debug("Nothing to send; Skipping the HTTP request.");
             return;
         }
 
-        String protocol = config.useSSL ? "https://" : "http://";
 
-        URL url = new URL(
-                protocol
-                        + config.url
-                        + "/v1/input/"
-                        + config.ddApiKey
-        );
-
-        sendRequest(content, url);
+        sendRequest(content, con);
     }
 
     private JsonArray formatBatch(String topic) {
@@ -133,21 +123,9 @@ public class DatadogLogsApiWriter {
         return content;
     }
 
-    private void sendRequest(JsonArray content, URL url) throws IOException {
+    private void sendRequest(JsonArray content, HttpURLConnection con) throws IOException {
         String requestContent = content.toString();
         byte[] compressedPayload = compress(requestContent);
-
-        HttpURLConnection con;
-        if (config.proxyURL != null) {
-            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(config.proxyURL, config.proxyPort));
-            con = (HttpURLConnection) url.openConnection(proxy);
-        } else {
-            con = (HttpURLConnection) url.openConnection();
-        }
-        con.setDoOutput(true);
-        con.setRequestMethod("POST");
-        con.setRequestProperty("Content-Type", "application/json");
-        con.setRequestProperty("Content-Encoding", "gzip");
 
         DataOutputStream output = new DataOutputStream(con.getOutputStream());
         output.write(compressedPayload);
@@ -158,7 +136,6 @@ public class DatadogLogsApiWriter {
         int status = con.getResponseCode();
         if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
             String error = getOutput(con.getErrorStream());
-            con.disconnect();
             throw new IOException("HTTP Response code: " + status
                     + ", " + con.getResponseMessage() + ", " + error
                     + ", Submitted payload: " + content);
@@ -170,7 +147,6 @@ public class DatadogLogsApiWriter {
         String response = getOutput(con.getInputStream());
 
         log.debug("Response content: " + response);
-        con.disconnect();
     }
 
     private byte[] compress(String str) throws IOException {

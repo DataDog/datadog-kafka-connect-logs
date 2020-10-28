@@ -13,12 +13,13 @@ import org.easymock.EasyMockSupport;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
 public class DatadogLogsSinkTaskTest extends EasyMockSupport {
@@ -41,7 +42,7 @@ public class DatadogLogsSinkTaskTest extends EasyMockSupport {
         final DatadogLogsApiWriter mockWriter = createMock(DatadogLogsApiWriter.class);
         SinkTaskContext ctx = createMock(SinkTaskContext.class);
 
-        mockWriter.write(records);
+        mockWriter.write(eq(records), anyObject(HttpURLConnection.class));
         expectLastCall().andThrow(new IOException()).times(1 + maxRetries);
 
         ctx.timeout(retryBackoffMs);
