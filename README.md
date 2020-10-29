@@ -20,9 +20,9 @@ To install the plugin, one must have a working instance of Kafka Connect connect
 
 See [confluent's documentation](https://docs.confluent.io/current/connect/managing/install.html).
 
-### Download from Maven
+### Download from Github
 
-Download under `Direct Downloads` from [JFrog/Bintray](https://bintray.com/beta/#/datadog/datadog-maven/datadog-kafka-connect-logs?tab=overview).
+Download the latest version from the GitHub [releases page](https://github.com/DataDog/datadog-kafka-connect-logs/releases).
 Also see [confluent's documentation](https://docs.confluent.io/current/connect/managing/community.html) on installing 
 community connectors.
 
@@ -55,9 +55,9 @@ ingested and set your Datadog `api_key`.
   }'    
 ```
 
-7. You can verify that data is ingested to the Datadog platform by searching for `source:kafka-connect` in the Log 
+4. You can verify that data is ingested to the Datadog platform by searching for `source:kafka-connect` in the Log 
 Explorer tab
-8. Use the following commands to check status, and manage connectors and tasks:
+5. Use the following commands to check status, and manage connectors and tasks:
 
 ```
     # List active connectors
