@@ -36,7 +36,7 @@ community connectors.
 
 ## Quick Start
 
-1. To install the plugin, simply place the jar file created by `mvn package` (`datadog-kafka-connect-logs-[VERSION].jar`) 
+1. To install the plugin, place the plugin's jar file (see [previous section](#installation-and-setup) on how to download or build it)
 in or under the location specified in `plugin.path` . If you use Confluent Platform, simply run 
 `confluent-hub install target/components/packages/<connector-zip-file>`.
 2. Restart your Kafka Connect instance.
@@ -156,4 +156,3 @@ kafka-producer-perf-test --topic perf-test --num-records 2000000 --record-size 1
 ## License
 
 Datadog Kafka Connect Logs is licensed under the Apache License 2.0. Details can be found in the file LICENSE.
-
