@@ -18,12 +18,13 @@ To install the plugin, one must have a working instance of Kafka Connect connect
 ## Installation and Setup
 ### Install from Confluent Hub
 
-See [confluent's documentation](https://docs.confluent.io/current/connect/managing/install.html).
+See [Confluent's documentation](https://docs.confluent.io/current/connect/managing/install.html) and the connector's page on
+[Confluent Hub](https://www.confluent.io/hub/datadog/kafka-connect-logs).
 
 ### Download from Github
 
 Download the latest version from the GitHub [releases page](https://github.com/DataDog/datadog-kafka-connect-logs/releases).
-Also see [confluent's documentation](https://docs.confluent.io/current/connect/managing/community.html) on installing 
+Also see [Confluent's documentation](https://docs.confluent.io/current/connect/managing/community.html) on installing 
 community connectors.
 
 ### Build from Source
