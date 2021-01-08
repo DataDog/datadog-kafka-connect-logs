@@ -6,7 +6,6 @@ This product includes software developed at Datadog (https://www.datadoghq.com/)
 package com.datadoghq.connect.logs.sink;
 
 import com.google.gson.*;
-import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,24 +24,24 @@ public class DatadogLogsApiWriter {
     private final DatadogLogsSinkConnectorConfig config;
     private static final Logger log = LoggerFactory.getLogger(DatadogLogsApiWriter.class);
     private final Map<String, List<SinkRecord>> batches;
-    private final JsonConverter jsonConverter;
+    private final SinkRecordsSerializer serializer;
 
     public DatadogLogsApiWriter(DatadogLogsSinkConnectorConfig config) {
         this.config = config;
         this.batches = new HashMap<>();
-        this.jsonConverter = new JsonConverter();
-        jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
+        this.serializer = new SinkRecordsSerializer(config);
     }
 
     /**
      * Writes records to the Datadog Logs API.
+     * 
      * @param records to be written from the Source Broker to the Datadog Logs API.
      * @throws IOException may be thrown if the connection to the API fails.
      */
     public void write(Collection<SinkRecord> records) throws IOException {
         for (SinkRecord record : records) {
             if (!batches.containsKey(record.topic())) {
-                batches.put(record.topic(), new ArrayList<> (Collections.singletonList(record)));
+                batches.put(record.topic(), new ArrayList<>(Collections.singletonList(record)));
             } else {
                 batches.get(record.topic()).add(record);
             }
@@ -58,7 +57,7 @@ public class DatadogLogsApiWriter {
 
     private void flushBatches() throws IOException {
         // send any outstanding batches
-        for(Map.Entry<String,List<SinkRecord>> entry: batches.entrySet()) {
+        for (Map.Entry<String, List<SinkRecord>> entry : batches.entrySet()) {
             sendBatch(entry.getKey());
         }
 
@@ -74,63 +73,14 @@ public class DatadogLogsApiWriter {
 
         String protocol = config.useSSL ? "https://" : "http://";
 
-        URL url = new URL(
-                protocol
-                        + config.url
-                        + "/v1/input/"
-                        + config.ddApiKey
-        );
+        URL url = new URL(protocol + config.url + "/v1/input/" + config.ddApiKey);
 
         sendRequest(content, url);
     }
 
     private JsonArray formatBatch(String topic) {
         List<SinkRecord> sinkRecords = batches.get(topic);
-        JsonArray batchRecords = new JsonArray();
-
-        for (SinkRecord record : sinkRecords) {
-            if (record == null) {
-                continue;
-            }
-
-            if (record.value() == null) {
-                continue;
-            }
-
-            JsonElement recordJSON = recordToJSON(record);
-            JsonObject message = populateMetadata(topic, recordJSON);
-            batchRecords.add(message);
-        }
-
-        return batchRecords;
-    }
-
-    private JsonElement recordToJSON(SinkRecord record) {
-        byte[] rawJSONPayload = jsonConverter.fromConnectData(record.topic(), record.valueSchema(), record.value());
-        String jsonPayload = new String(rawJSONPayload, StandardCharsets.UTF_8);
-        return new Gson().fromJson(jsonPayload, JsonElement.class);
-    }
-
-    private JsonObject populateMetadata(String topic, JsonElement message) {
-        JsonObject content = new JsonObject();
-        String tags = "topic:" + topic;
-        content.add("message", message);
-        content.add("ddsource", new JsonPrimitive(config.ddSource));
-
-        if (config.ddTags != null) {
-            tags += "," + config.ddTags;
-        }
-        content.add("ddtags", new JsonPrimitive(tags));
-
-        if (config.ddHostname != null) {
-            content.add("hostname", new JsonPrimitive(config.ddHostname));
-        }
-
-        if (config.ddService != null) {
-            content.add("service", new JsonPrimitive(config.ddService));
-        }
-
-        return content;
+        return this.serializer.serialize(topic, sinkRecords);
     }
 
     private void sendRequest(JsonArray content, URL url) throws IOException {
@@ -159,8 +109,7 @@ public class DatadogLogsApiWriter {
         if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
             String error = getOutput(con.getErrorStream());
             con.disconnect();
-            throw new IOException("HTTP Response code: " + status
-                    + ", " + con.getResponseMessage() + ", " + error
+            throw new IOException("HTTP Response code: " + status + ", " + con.getResponseMessage() + ", " + error
                     + ", Submitted payload: " + content);
         }
 
