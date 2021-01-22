@@ -5,7 +5,10 @@ This product includes software developed at Datadog (https://www.datadoghq.com/)
 
 package com.datadoghq.connect.logs.sink;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +20,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.google.gson.stream.JsonWriter;
 
 import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
@@ -25,15 +29,21 @@ public class SinkRecordsSerializer {
 
     private final JsonConverter jsonConverter;
     private final DatadogLogsSinkConnectorConfig config;
+    private final ByteArrayOutputStream outputStream;
 
     public SinkRecordsSerializer(DatadogLogsSinkConnectorConfig config) {
         this.config = config;
         this.jsonConverter = new JsonConverter();
+        this.outputStream = new ByteArrayOutputStream();
         jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
     }
 
-    public List<String> serialize(String topic, List<SinkRecord> sinkRecords) {
-        JsonArray batchRecords = new JsonArray();
+    public List<String> serialize(String topic, List<SinkRecord> sinkRecords) throws IOException {
+        this.outputStream.reset();
+
+        JsonWriter writer = new JsonWriter(new OutputStreamWriter(this.outputStream, "UTF-8"));
+        writer.beginArray();
+        Gson gson = new Gson();
 
         for (SinkRecord record : sinkRecords) {
             if (record == null) {
@@ -46,11 +56,15 @@ public class SinkRecordsSerializer {
 
             JsonElement recordJSON = recordToJSON(record);
             JsonObject message = populateMetadata(topic, recordJSON);
-            batchRecords.add(message);
+            gson.toJson(message, writer);
+            writer.flush();
         }
+        writer.endArray();
+        writer.close();
+
         
         List<String> result = new ArrayList<String>();
-        result.add(batchRecords.toString());
+        result.add(this.outputStream.toString());
         return result;
     }
 
