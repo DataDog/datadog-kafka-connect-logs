@@ -5,9 +5,12 @@ This product includes software developed at Datadog (https://www.datadoghq.com/)
 
 package com.datadoghq.connect.logs.sink;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -29,7 +32,7 @@ public class SinkRecordsSerializer {
         jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
     }
 
-    public JsonArray serialize(String topic, List<SinkRecord> sinkRecords) {
+    public List<String> serialize(String topic, List<SinkRecord> sinkRecords) {
         JsonArray batchRecords = new JsonArray();
 
         for (SinkRecord record : sinkRecords) {
@@ -45,8 +48,10 @@ public class SinkRecordsSerializer {
             JsonObject message = populateMetadata(topic, recordJSON);
             batchRecords.add(message);
         }
-
-        return batchRecords;
+        
+        List<String> result = new ArrayList<String>();
+        result.add(batchRecords.toString());
+        return result;
     }
 
     private JsonElement recordToJSON(SinkRecord record) {

@@ -65,27 +65,19 @@ public class DatadogLogsApiWriter {
     }
 
     private void sendBatch(String topic) throws IOException {
-        JsonArray content = formatBatch(topic);
-        if (content.size() == 0) {
-            log.debug("Nothing to send; Skipping the HTTP request.");
-            return;
-        }
-
         String protocol = config.useSSL ? "https://" : "http://";
 
         URL url = new URL(protocol + config.url + "/v1/input/" + config.ddApiKey);
 
-        sendRequest(content, url);
-    }
-
-    private JsonArray formatBatch(String topic) {
         List<SinkRecord> sinkRecords = batches.get(topic);
-        return this.serializer.serialize(topic, sinkRecords);
+        List<String> result = this.serializer.serialize(topic, sinkRecords);
+        for (String content: result) {
+            sendRequest(content, url);
+        }
     }
 
-    private void sendRequest(JsonArray content, URL url) throws IOException {
-        String requestContent = content.toString();
-        byte[] compressedPayload = compress(requestContent);
+    private void sendRequest(String content, URL url) throws IOException {        
+        byte[] compressedPayload = compress(content);
 
         HttpURLConnection con;
         if (config.proxyURL != null) {
@@ -102,7 +94,7 @@ public class DatadogLogsApiWriter {
         DataOutputStream output = new DataOutputStream(con.getOutputStream());
         output.write(compressedPayload);
         output.close();
-        log.debug("Submitted payload: " + requestContent);
+        log.debug("Submitted payload: " + content);
 
         // get response
         int status = con.getResponseCode();
