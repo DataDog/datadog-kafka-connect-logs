@@ -28,11 +28,17 @@ import org.apache.kafka.connect.sink.SinkRecord;
 public class SinkRecordsSerializer {
 
     private final JsonConverter jsonConverter;
-    private final DatadogLogsSinkConnectorConfig config;
     private final ByteArrayOutputStream outputStream;
+    private final String ddSource;
+    private final String ddTags;
+    private final String ddHostname;
+    private final String ddService;
 
-    public SinkRecordsSerializer(DatadogLogsSinkConnectorConfig config) {
-        this.config = config;
+    public SinkRecordsSerializer(String ddSource, String ddTags, String ddHostname, String ddService) {
+        this.ddSource = ddSource;
+        this.ddTags = ddTags;
+        this.ddHostname = ddHostname;
+        this.ddService = ddService;
         this.jsonConverter = new JsonConverter();
         this.outputStream = new ByteArrayOutputStream();
         jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
@@ -62,7 +68,6 @@ public class SinkRecordsSerializer {
         writer.endArray();
         writer.close();
 
-        
         List<String> result = new ArrayList<String>();
         result.add(this.outputStream.toString());
         return result;
@@ -78,19 +83,19 @@ public class SinkRecordsSerializer {
         JsonObject content = new JsonObject();
         String tags = "topic:" + topic;
         content.add("message", message);
-        content.add("ddsource", new JsonPrimitive(config.ddSource));
+        content.add("ddsource", new JsonPrimitive(this.ddSource));
 
-        if (config.ddTags != null) {
-            tags += "," + config.ddTags;
+        if (this.ddTags != null) {
+            tags += "," + this.ddTags;
         }
         content.add("ddtags", new JsonPrimitive(tags));
 
-        if (config.ddHostname != null) {
-            content.add("hostname", new JsonPrimitive(config.ddHostname));
+        if (this.ddHostname != null) {
+            content.add("hostname", new JsonPrimitive(this.ddHostname));
         }
 
-        if (config.ddService != null) {
-            content.add("service", new JsonPrimitive(config.ddService));
+        if (this.ddService != null) {
+            content.add("service", new JsonPrimitive(this.ddService));
         }
 
         return content;
