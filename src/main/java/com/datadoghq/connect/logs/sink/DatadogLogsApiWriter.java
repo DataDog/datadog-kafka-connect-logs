@@ -29,7 +29,8 @@ public class DatadogLogsApiWriter {
     public DatadogLogsApiWriter(DatadogLogsSinkConnectorConfig config) {
         this.config = config;
         this.batches = new HashMap<>();
-        this.serializer = new SinkRecordsSerializer(config.ddSource, config.ddTags, config.ddHostname, config.ddService);
+        int maxPayloadSize = 5 * 1024 * 1024;
+        this.serializer = new SinkRecordsSerializer(config.ddSource, config.ddTags, config.ddHostname, config.ddService, maxPayloadSize);
     }
 
     /**

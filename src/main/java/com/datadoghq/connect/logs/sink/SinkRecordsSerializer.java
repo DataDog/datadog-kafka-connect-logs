@@ -24,21 +24,27 @@ import com.google.gson.stream.JsonWriter;
 
 import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SinkRecordsSerializer {
 
+    private static final Logger log = LoggerFactory.getLogger(SinkRecordsSerializer.class);
     private final JsonConverter jsonConverter;
     private final ByteArrayOutputStream outputStream;
     private final String ddSource;
     private final String ddTags;
     private final String ddHostname;
     private final String ddService;
+    private final long maxPayloadSize;
 
-    public SinkRecordsSerializer(String ddSource, String ddTags, String ddHostname, String ddService) {
+    public SinkRecordsSerializer(String ddSource, String ddTags, String ddHostname, String ddService,
+            long maxPayloadSize) {
         this.ddSource = ddSource;
         this.ddTags = ddTags;
         this.ddHostname = ddHostname;
         this.ddService = ddService;
+        this.maxPayloadSize = maxPayloadSize;
         this.jsonConverter = new JsonConverter();
         this.outputStream = new ByteArrayOutputStream();
         jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
@@ -46,31 +52,51 @@ public class SinkRecordsSerializer {
 
     public List<String> serialize(String topic, List<SinkRecord> sinkRecords) throws IOException {
         this.outputStream.reset();
-
-        JsonWriter writer = new JsonWriter(new OutputStreamWriter(this.outputStream, "UTF-8"));
+        List<String> output = new ArrayList<String>();
+        JsonWriter writer = StartJson(this.outputStream);
         writer.beginArray();
-        Gson gson = new Gson();
 
         for (SinkRecord record : sinkRecords) {
-            if (record == null) {
-                continue;
-            }
-
-            if (record.value() == null) {
+            if (record == null || record.value() == null) {
                 continue;
             }
 
             JsonElement recordJSON = recordToJSON(record);
-            JsonObject message = populateMetadata(topic, recordJSON);
-            gson.toJson(message, writer);
-            writer.flush();
-        }
-        writer.endArray();
-        writer.close();
+            JsonObject jsonObject = populateMetadata(topic, recordJSON);
+            String message = jsonObject.toString();
+            if (message.length() + 2 > maxPayloadSize) { // +2 (begin and end of the JSON array)
+                log.debug("Single message exeed the maximum payload size");
+            }
 
-        List<String> result = new ArrayList<String>();
-        result.add(this.outputStream.toString());
-        return result;
+            writer.flush();
+            if (this.outputStream.size() + message.length() + 2 > maxPayloadSize) { // +1 for `,` +1 for `]`
+                output.add(FinishJson(this.outputStream, writer));
+                writer = StartJson(this.outputStream);
+            }
+            writer.jsonValue(message);
+        }
+
+        writer.flush();
+        if (this.outputStream.size() > 0) {
+            output.add(FinishJson(this.outputStream, writer));
+        }
+        writer.close();
+        return output;
+    }
+
+    private static JsonWriter StartJson(ByteArrayOutputStream outputStream) throws IOException {
+        OutputStreamWriter streamWriter = new OutputStreamWriter(outputStream, "UTF-8");
+        JsonWriter writer = new JsonWriter(streamWriter);
+        writer.beginArray();
+        return writer;
+    }
+
+    private static String FinishJson(ByteArrayOutputStream outputStream, JsonWriter writer) throws IOException {
+        writer.endArray();
+        writer.flush();
+        String json = outputStream.toString();
+        outputStream.reset();
+        return json;
     }
 
     private JsonElement recordToJSON(SinkRecord record) {
