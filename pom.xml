@@ -196,7 +196,7 @@
                             <title>Datadog Kafka Connect Logs</title>
                             <name>kafka-connect-logs</name>
                             <version>${project.version}</version>
-                            <documentationUrl>https://github.com/DataDog/datadog-kafka-connect-logss</documentationUrl>
+                            <documentationUrl>https://github.com/DataDog/datadog-kafka-connect-logs</documentationUrl>
                             <description>
                                 A Kafka Connect Connector that sends Kafka Connect records as logs to the Datadog API.
                             </description>
