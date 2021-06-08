@@ -37,14 +37,18 @@ public class SinkRecordsSerializer {
     private final String ddHostname;
     private final String ddService;
     private final long maxPayloadSize;
+   // private final long maxLogCount;
+  //  private final long maxLogLength;
 
     public SinkRecordsSerializer(String ddSource, String ddTags, String ddHostname, String ddService,
-            long maxPayloadSize) {
+            long maxPayloadSize/*, long maxLogCount, long maxLogLength*/) {
         this.ddSource = ddSource;
         this.ddTags = ddTags;
         this.ddHostname = ddHostname;
         this.ddService = ddService;
         this.maxPayloadSize = maxPayloadSize;
+      //  this.maxLogCount = maxLogCount;
+     //   this.maxLogLength = maxLogLength;
         this.jsonConverter = new JsonConverter();
         this.outputStream = new ByteArrayOutputStream();
         jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
@@ -80,7 +84,7 @@ public class SinkRecordsSerializer {
         if (this.outputStream.size() > 0) {
             output.add(FinishJson(this.outputStream, writer));
         }
-        writer.close();
+        writer.close(); // not close underlying stream
         return output;
     }
 

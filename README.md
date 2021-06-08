@@ -50,7 +50,7 @@ ingested and set your Datadog `api_key`.
       "connector.class": "com.datadoghq.connect.logs.DatadogLogsSinkConnector",
       "datadog.api_key": "<YOUR_API_KEY>",
       "tasks.max": "3",
-      "topics":"<YOUR_TOPIC>",
+      "topics":"<YOUR_TOPIC>"
     }
   }'    
 ```
