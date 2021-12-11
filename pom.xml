@@ -44,7 +44,7 @@
         <easymock.version>4.2</easymock.version>
         <bintray.repo>datadog/datadog-maven</bintray.repo>
         <bintray.package>datadog-kafka-connect-logs</bintray.package>
-        <log4j.version>2.13.3</log4j.version>
+        <log4j.version>2.15.0</log4j.version>
         <jetty.version>9.4.41.v20210516</jetty.version>
         <junit.version>4.13.1</junit.version>
         <java.version>1.8</java.version>
