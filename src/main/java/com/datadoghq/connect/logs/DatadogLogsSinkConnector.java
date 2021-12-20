@@ -7,6 +7,7 @@ package com.datadoghq.connect.logs;
 
 import com.datadoghq.connect.logs.sink.DatadogLogsSinkConnectorConfig;
 import com.datadoghq.connect.logs.sink.DatadogLogsSinkTask;
+import com.datadoghq.connect.logs.util.Telemetry;
 import com.datadoghq.connect.logs.util.Version;
 
 import org.apache.kafka.common.config.Config;
@@ -24,6 +25,7 @@ import java.util.Map;
 public class DatadogLogsSinkConnector extends SinkConnector {
     private static final Logger log = LoggerFactory.getLogger(DatadogLogsSinkConnector.class);
     private Map<String, String> configProps;
+    private Telemetry telemetry;
 
     @Override
     public List<Map<String, String>> taskConfigs(int maxTasks) {
@@ -40,6 +42,7 @@ public class DatadogLogsSinkConnector extends SinkConnector {
     public void start(Map<String, String> props) {
         log.info("Starting Datadog Logs Sink Connector.");
         configProps = props;
+        telemetry = new Telemetry();
     }
 
     @Override
