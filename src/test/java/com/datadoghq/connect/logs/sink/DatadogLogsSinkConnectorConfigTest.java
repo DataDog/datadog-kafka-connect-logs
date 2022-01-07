@@ -34,4 +34,19 @@ public class DatadogLogsSinkConnectorConfigTest {
 
         assertEquals("test1,test2,test3", config.ddTags);
     }
+
+    @Test
+    public void getUrl_givenValidProps_shouldReturnString() {
+        props = new HashMap<>();
+        props.put(DatadogLogsSinkConnectorConfig.DD_API_KEY, "123");
+        DatadogLogsSinkConnectorConfig config = new DatadogLogsSinkConnectorConfig(props);
+        
+        props.put(DatadogLogsSinkConnectorConfig.DD_URL, "example.com");
+        DatadogLogsSinkConnectorConfig customConfig = new DatadogLogsSinkConnectorConfig(props);
+
+
+        assertEquals("http-intake.logs.datadoghq.com:443", config.url);
+        assertEquals("example.com", customConfig.url);
+
+    }
 }

@@ -18,6 +18,7 @@ import java.util.Map;
 
 public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
+    public static final String DD_URL = "datadog.url";
     public static final String DD_TAGS = "datadog.tags";
     public static final String DD_SERVICE = "datadog.service";
     public static final String DD_HOSTNAME = "datadog.hostname";
@@ -57,7 +58,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         retryMax = getInt(MAX_RETRIES);
         retryBackoffMs = getInt(RETRY_BACKOFF_MS);
         useSSL = true;
-        url = "http-intake.logs.datadoghq.com:443";
+        url = getString(DD_URL);
         ddMaxBatchLength = 500;
         validateConfig();
     }
@@ -82,6 +83,9 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         if (getPasswordValue(DD_API_KEY) == null) {
             throw new ConfigException("API Key must not be empty.");
         }
+        if (getString(DD_URL) == null) {
+            throw new ConfigException("Url must not be empty.");
+        }
     }
 
     private static ConfigDef baseConfigDef() {
@@ -97,6 +101,16 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         final String group = "Datadog Metadata";
 
         configDef.define(
+                DD_URL,
+                Type.STRING,
+                "http-intake.logs.datadoghq.com:443",
+                Importance.HIGH,
+                "The URL endpoint where logs will be send",
+                group,
+                ++orderInGroup,
+                Width.LONG,
+                "Datadog logs endpoint"
+        ).define(
                 DD_API_KEY,
                 Type.PASSWORD,
                 ConfigDef.NO_DEFAULT_VALUE,
