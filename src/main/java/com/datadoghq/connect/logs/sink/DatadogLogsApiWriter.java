@@ -76,7 +76,7 @@ public class DatadogLogsApiWriter {
 
         URL url = new URL(
                 protocol
-                        + config.url
+                        + config.ddUrl
                         + "/v1/input/"
                         + config.ddApiKey
         );

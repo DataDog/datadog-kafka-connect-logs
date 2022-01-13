@@ -27,6 +27,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     public static final String PROXY_PORT = "datadog.proxy.port";
     public static final String MAX_RETRIES = "datadog.retry.max";
     public static final String RETRY_BACKOFF_MS = "datadog.retry.backoff_ms";
+    public static final String DEFAULT_DD_URL = "http-intake.logs.datadoghq.com:443";
 
     // Respect limit documented at https://docs.datadoghq.com/api/?lang=bash#logs
     public final Integer ddMaxBatchLength;
@@ -34,8 +35,8 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
 
     // Only for testing
     public final Boolean useSSL;
-    public final String url;
 
+    public final String ddUrl;
     public final String ddTags;
     public final String ddService;
     public final String ddHostname;
@@ -48,22 +49,10 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     public static final ConfigDef CONFIG_DEF = baseConfigDef();
 
     public DatadogLogsSinkConnectorConfig(Map<String, String> props) {
-        super(baseConfigDef(), props);
-        ddTags = getTags(DD_TAGS);
-        ddService = getString(DD_SERVICE);
-        ddHostname = getString(DD_HOSTNAME);
-        ddApiKey = getPasswordValue(DD_API_KEY);
-        proxyURL = getString(PROXY_URL);
-        proxyPort = getInt(PROXY_PORT);
-        retryMax = getInt(MAX_RETRIES);
-        retryBackoffMs = getInt(RETRY_BACKOFF_MS);
-        useSSL = true;
-        url = getString(DD_URL);
-        ddMaxBatchLength = 500;
-        validateConfig();
+        this(true, 500, props);
     }
 
-    public DatadogLogsSinkConnectorConfig(Boolean useSSL, String url, Integer ddMaxBatchLength, Map<String, String> props) {
+    public DatadogLogsSinkConnectorConfig(Boolean useSSL, Integer ddMaxBatchLength, Map<String, String> props) {
         super(baseConfigDef(), props);
         ddTags = getTags(DD_TAGS);
         ddService = getString(DD_SERVICE);
@@ -74,7 +63,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         retryMax = getInt(MAX_RETRIES);
         retryBackoffMs = getInt(RETRY_BACKOFF_MS);
         this.useSSL = useSSL;
-        this.url = url;
+        this.ddUrl = getString(DD_URL);
         this.ddMaxBatchLength = ddMaxBatchLength;
         validateConfig();
     }
@@ -103,7 +92,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         configDef.define(
                 DD_URL,
                 Type.STRING,
-                "http-intake.logs.datadoghq.com:443",
+                DEFAULT_DD_URL,
                 Importance.HIGH,
                 "The URL endpoint where logs will be send",
                 group,

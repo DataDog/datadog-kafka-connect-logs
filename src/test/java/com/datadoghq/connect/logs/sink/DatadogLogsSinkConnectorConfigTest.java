@@ -45,8 +45,7 @@ public class DatadogLogsSinkConnectorConfigTest {
         DatadogLogsSinkConnectorConfig customConfig = new DatadogLogsSinkConnectorConfig(props);
 
 
-        assertEquals("http-intake.logs.datadoghq.com:443", config.url);
-        assertEquals("example.com", customConfig.url);
-
+        assertEquals(DatadogLogsSinkConnectorConfig.DEFAULT_DD_URL, config.ddUrl);
+        assertEquals("example.com", customConfig.ddUrl);
     }
 }
