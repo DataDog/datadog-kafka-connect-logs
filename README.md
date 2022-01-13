@@ -97,6 +97,7 @@ A REST call can be executed against one of the cluster instances, and the config
 #### General Optional Parameters
 | Name              | Description                | Default Value  |
 |--------           |----------------------------|-----------------------|
+| `datadog.url` | Datadog url endpoint where your logs will be sent| `http-intake.logs.datadoghq.com:443` ||
 | `datadog.tags` | Tags associated with your logs in a comma separated tag:value format.||
 | `datadog.service` | The name of the application or service generating the log events.||
 | `datadog.hostname` | The name of the originating host of the log.||
