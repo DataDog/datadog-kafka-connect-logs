@@ -150,7 +150,11 @@ public class DatadogLogsApiWriter {
         // get response
         int status = con.getResponseCode();
         if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
-            String error = getOutput(con.getErrorStream());
+            InputStream stream = con.getErrorStream();
+            String error = "";
+            if (stream != null ) {
+                error = getOutput(stream);
+            }
             con.disconnect();
             throw new IOException("HTTP Response code: " + status
                     + ", " + con.getResponseMessage() + ", " + error
