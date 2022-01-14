@@ -5,6 +5,7 @@ Changelog
 
 ### Changes
 * Add datadog url endpoint configurable from parameters
+* Add datadog site configurable from parameters
 
 # 1.0.3 / 2021-12-18
 

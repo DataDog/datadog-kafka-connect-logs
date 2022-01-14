@@ -8,6 +8,7 @@ package com.datadoghq.connect.logs.sink;
 import org.apache.kafka.common.config.ConfigException;
 import org.junit.Test;
 
+import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,16 +37,31 @@ public class DatadogLogsSinkConnectorConfigTest {
     }
 
     @Test
-    public void getUrl_givenValidProps_shouldReturnString() {
+    public void getURL_default() throws MalformedURLException {
         props = new HashMap<>();
         props.put(DatadogLogsSinkConnectorConfig.DD_API_KEY, "123");
-        DatadogLogsSinkConnectorConfig config = new DatadogLogsSinkConnectorConfig(props);
-        
+        DatadogLogsSinkConnectorConfig customConfig = new DatadogLogsSinkConnectorConfig(props);
+
+        assertEquals("https://http-intake.logs.datadoghq.com:443/v1/input/123", customConfig.getURL().toString());
+    }
+
+    @Test
+    public void getURL_ddURL() throws MalformedURLException {
+        props = new HashMap<>();
+        props.put(DatadogLogsSinkConnectorConfig.DD_API_KEY, "123");
         props.put(DatadogLogsSinkConnectorConfig.DD_URL, "example.com");
         DatadogLogsSinkConnectorConfig customConfig = new DatadogLogsSinkConnectorConfig(props);
 
+        assertEquals("https://example.com/v1/input/123", customConfig.getURL().toString());
+    }
 
-        assertEquals(DatadogLogsSinkConnectorConfig.DEFAULT_DD_URL, config.ddUrl);
-        assertEquals("example.com", customConfig.ddUrl);
+    @Test
+    public void getURL_ddSite() throws MalformedURLException {
+        props = new HashMap<>();
+        props.put(DatadogLogsSinkConnectorConfig.DD_API_KEY, "123");
+        props.put(DatadogLogsSinkConnectorConfig.DD_SITE, "SITE");
+        DatadogLogsSinkConnectorConfig customConfig = new DatadogLogsSinkConnectorConfig(props);
+
+        assertEquals("https://http-intake.logs.SITE:443/v1/input/123", customConfig.getURL().toString());
     }
 }

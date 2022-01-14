@@ -97,7 +97,8 @@ A REST call can be executed against one of the cluster instances, and the config
 #### General Optional Parameters
 | Name              | Description                | Default Value  |
 |--------           |----------------------------|-----------------------|
-| `datadog.url` | Datadog url endpoint where your logs will be sent| `http-intake.logs.datadoghq.com:443` ||
+| `datadog.url` | Datadog URL endpoint where your logs will be sent. `datadog.url` takes precedence over `datadog.site`. Example: `http-intake.logs.datadoghq.com:443` ||
+| `datadog.site` | The site of the Datadog intake to send Agent data to (For example 'datadoghq.eu' to send data to the EU site) ||
 | `datadog.tags` | Tags associated with your logs in a comma separated tag:value format.||
 | `datadog.service` | The name of the application or service generating the log events.||
 | `datadog.hostname` | The name of the originating host of the log.||
