@@ -5,6 +5,7 @@ This product includes software developed at Datadog (https://www.datadoghq.com/)
 
 package com.datadoghq.connect.logs.sink;
 
+import com.datadoghq.connect.logs.util.Version;
 import com.google.gson.*;
 import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
@@ -139,8 +140,7 @@ public class DatadogLogsApiWriter {
         }
         con.setDoOutput(true);
         con.setRequestMethod("POST");
-        con.setRequestProperty("Content-Type", "application/json");
-        con.setRequestProperty("Content-Encoding", "gzip");
+        setRequestProperties(con);
 
         DataOutputStream output = new DataOutputStream(con.getOutputStream());
         output.write(compressedPayload);
@@ -168,6 +168,16 @@ public class DatadogLogsApiWriter {
 
         log.debug("Response content: " + response);
         con.disconnect();
+    }
+
+    private void setRequestProperties(HttpURLConnection con) {
+        con.setRequestProperty("Content-Type", "application/json");
+        con.setRequestProperty("Content-Encoding", "gzip");
+        con.setRequestProperty("DD-API-KEY", config.ddApiKey);
+
+        Package p = getClass().getPackage();
+        con.setRequestProperty("DD-EVP-ORIGIN", p.getName());
+        con.setRequestProperty("DD-EVP-ORIGIN-VERSION", Version.getVersion());
     }
 
     private byte[] compress(String str) throws IOException {
