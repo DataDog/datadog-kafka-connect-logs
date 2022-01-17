@@ -174,9 +174,7 @@ public class DatadogLogsApiWriter {
         con.setRequestProperty("Content-Type", "application/json");
         con.setRequestProperty("Content-Encoding", "gzip");
         con.setRequestProperty("DD-API-KEY", config.ddApiKey);
-
-        Package p = getClass().getPackage();
-        con.setRequestProperty("DD-EVP-ORIGIN", p.getName());
+        con.setRequestProperty("DD-EVP-ORIGIN", Project.getName());
         con.setRequestProperty("DD-EVP-ORIGIN-VERSION", Project.getVersion());
     }
 

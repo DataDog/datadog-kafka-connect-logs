@@ -15,12 +15,14 @@ public class Project {
     private static final Logger log = LoggerFactory.getLogger(Project.class);
     private static final String PATH = "/datadog-kafka-connect-logs.properties";
     private static String version = "unknown";
+    private static String name = "unknown";
 
     static {
         try (InputStream stream = Project.class.getResourceAsStream(PATH)) {
             Properties properties = new Properties();
             properties.load(stream);
             version = properties.getProperty("version", version).trim();
+            name = properties.getProperty("name", name).trim();
         } catch (Exception e) {
             log.warn("Error while loading version: ", e);
         }
@@ -28,5 +30,9 @@ public class Project {
 
     public static String getVersion() {
         return version;
+    }
+
+    public static String getName() {
+        return name;
     }
 }

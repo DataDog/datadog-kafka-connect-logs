@@ -58,7 +58,7 @@ public class DatadogLogsApiWriterTest {
         Assert.assertTrue(request.getHeaders().contains("Content-Type:application/json"));
         Assert.assertTrue(request.getHeaders().contains("Content-Encoding:gzip"));
         Assert.assertTrue(request.getHeaders().contains("DD-API-KEY:" + apiKey));
-        Assert.assertTrue(request.getHeaders().contains("DD-EVP-ORIGIN:com.datadoghq.connect.logs.sink"));
+        Assert.assertTrue(request.getHeaders().contains("DD-EVP-ORIGIN:datadog-kafka-connect-logs"));
         Assert.assertTrue(request.getHeaders().contains("DD-EVP-ORIGIN-VERSION:" + Project.getVersion()));
     }
 
