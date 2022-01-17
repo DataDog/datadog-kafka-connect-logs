@@ -1,7 +1,7 @@
 Changelog
 =========
 
-# 1.0.4 / 2022-01-14
+# 1.1.0 / in development
 
 ### Changes
 * Add datadog url endpoint configurable from parameters
