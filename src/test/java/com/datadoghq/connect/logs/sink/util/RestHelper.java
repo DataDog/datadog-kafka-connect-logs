@@ -24,14 +24,14 @@ public class RestHelper extends HttpServlet {
 
     private Server server;
     private final List<RequestInfo> capturedRequests = new ArrayList<RequestInfo>();
-    public static final String API_KEY = "test";
+    private int statusCode = HttpServletResponse.SC_OK;
 
     public void start() throws Exception {
         server = new Server();
         ServerConnector connector = new ServerConnector(server);
         ServletContextHandler handler = new ServletContextHandler();
         ServletHolder testServ = new ServletHolder("test", this);
-        handler.addServlet(testServ,"/v1/input/" + API_KEY);
+        handler.addServlet(testServ,"/api/v2/logs");
 
         server.setHandler(handler);
         connector.setPort(8080);
@@ -44,12 +44,15 @@ public class RestHelper extends HttpServlet {
         server.stop();
     }
 
+    public void setHttpStatusCode(int statusCode) {
+        this.statusCode = statusCode;
+    }
+
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         capturedRequests.add(getRequestInfo(request));
 
         response.setContentType("application/json");
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.getWriter().println("{ \"status\": \"ok\"}");
+        response.setStatus(statusCode);
     }
 
     private RequestInfo getRequestInfo(HttpServletRequest request) throws IOException {

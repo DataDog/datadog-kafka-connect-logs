@@ -42,7 +42,7 @@ public class DatadogLogsSinkConnectorConfigTest {
         props.put(DatadogLogsSinkConnectorConfig.DD_API_KEY, "123");
         DatadogLogsSinkConnectorConfig customConfig = new DatadogLogsSinkConnectorConfig(props);
 
-        assertEquals("https://http-intake.logs.datadoghq.com:443/v1/input/123", customConfig.getURL().toString());
+        assertEquals("https://http-intake.logs.datadoghq.com:443/api/v2/logs", customConfig.getURL().toString());
     }
 
     @Test
@@ -52,7 +52,7 @@ public class DatadogLogsSinkConnectorConfigTest {
         props.put(DatadogLogsSinkConnectorConfig.DD_URL, "example.com");
         DatadogLogsSinkConnectorConfig customConfig = new DatadogLogsSinkConnectorConfig(props);
 
-        assertEquals("https://example.com/v1/input/123", customConfig.getURL().toString());
+        assertEquals("https://example.com/api/v2/logs", customConfig.getURL().toString());
     }
 
     @Test
@@ -62,6 +62,6 @@ public class DatadogLogsSinkConnectorConfigTest {
         props.put(DatadogLogsSinkConnectorConfig.DD_SITE, "SITE");
         DatadogLogsSinkConnectorConfig customConfig = new DatadogLogsSinkConnectorConfig(props);
 
-        assertEquals("https://http-intake.logs.SITE:443/v1/input/123", customConfig.getURL().toString());
+        assertEquals("https://http-intake.logs.SITE:443/api/v2/logs", customConfig.getURL().toString());
     }
 }

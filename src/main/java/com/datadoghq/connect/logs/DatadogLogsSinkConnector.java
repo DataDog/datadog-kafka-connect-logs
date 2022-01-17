@@ -7,7 +7,7 @@ package com.datadoghq.connect.logs;
 
 import com.datadoghq.connect.logs.sink.DatadogLogsSinkConnectorConfig;
 import com.datadoghq.connect.logs.sink.DatadogLogsSinkTask;
-import com.datadoghq.connect.logs.util.Version;
+import com.datadoghq.connect.logs.util.Project;
 
 import org.apache.kafka.common.config.Config;
 import org.apache.kafka.common.config.ConfigDef;
@@ -59,7 +59,7 @@ public class DatadogLogsSinkConnector extends SinkConnector {
 
     @Override
     public String version() {
-        return Version.getVersion();
+        return Project.getVersion();
     }
 
     @Override

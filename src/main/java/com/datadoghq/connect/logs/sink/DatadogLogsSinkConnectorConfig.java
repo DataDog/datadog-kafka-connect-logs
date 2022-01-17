@@ -86,12 +86,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
             domain = String.format(DD_URL_FORMAT_FROM_SITE, ddSite);
         }
 
-        return new URL(
-                protocol
-                        + domain
-                        + "/v1/input/"
-                        + ddApiKey
-        );
+        return new URL(protocol + domain + "/api/v2/logs");
     }
     private void validateConfig() {
         if (getPasswordValue(DD_API_KEY) == null) {

@@ -5,6 +5,7 @@ This product includes software developed at Datadog (https://www.datadoghq.com/)
 
 package com.datadoghq.connect.logs.sink;
 
+import com.datadoghq.connect.logs.util.Project;
 import com.google.gson.*;
 import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
@@ -139,8 +140,7 @@ public class DatadogLogsApiWriter {
         }
         con.setDoOutput(true);
         con.setRequestMethod("POST");
-        con.setRequestProperty("Content-Type", "application/json");
-        con.setRequestProperty("Content-Encoding", "gzip");
+        setRequestProperties(con);
 
         DataOutputStream output = new DataOutputStream(con.getOutputStream());
         output.write(compressedPayload);
@@ -150,7 +150,11 @@ public class DatadogLogsApiWriter {
         // get response
         int status = con.getResponseCode();
         if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
-            String error = getOutput(con.getErrorStream());
+            InputStream stream = con.getErrorStream();
+            String error = "";
+            if (stream != null ) {
+                error = getOutput(stream);
+            }
             con.disconnect();
             throw new IOException("HTTP Response code: " + status
                     + ", " + con.getResponseMessage() + ", " + error
@@ -164,6 +168,14 @@ public class DatadogLogsApiWriter {
 
         log.debug("Response content: " + response);
         con.disconnect();
+    }
+
+    private void setRequestProperties(HttpURLConnection con) {
+        con.setRequestProperty("Content-Type", "application/json");
+        con.setRequestProperty("Content-Encoding", "gzip");
+        con.setRequestProperty("DD-API-KEY", config.ddApiKey);
+        con.setRequestProperty("DD-EVP-ORIGIN", Project.getName());
+        con.setRequestProperty("DD-EVP-ORIGIN-VERSION", Project.getVersion());
     }
 
     private byte[] compress(String str) throws IOException {
