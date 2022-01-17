@@ -11,13 +11,13 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class Version {
-    private static final Logger log = LoggerFactory.getLogger(Version.class);
+public class Project {
+    private static final Logger log = LoggerFactory.getLogger(Project.class);
     private static final String PATH = "/datadog-kafka-connect-logs.properties";
     private static String version = "unknown";
 
     static {
-        try (InputStream stream = Version.class.getResourceAsStream(PATH)) {
+        try (InputStream stream = Project.class.getResourceAsStream(PATH)) {
             Properties properties = new Properties();
             properties.load(stream);
             version = properties.getProperty("version", version).trim();

@@ -7,7 +7,7 @@ package com.datadoghq.connect.logs.sink;
 
 import com.datadoghq.connect.logs.sink.util.RequestInfo;
 import com.datadoghq.connect.logs.sink.util.RestHelper;
-import com.datadoghq.connect.logs.util.Version;
+import com.datadoghq.connect.logs.util.Project;
 
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.junit.After;
@@ -59,7 +59,7 @@ public class DatadogLogsApiWriterTest {
         Assert.assertTrue(request.getHeaders().contains("Content-Encoding:gzip"));
         Assert.assertTrue(request.getHeaders().contains("DD-API-KEY:" + apiKey));
         Assert.assertTrue(request.getHeaders().contains("DD-EVP-ORIGIN:com.datadoghq.connect.logs.sink"));
-        Assert.assertTrue(request.getHeaders().contains("DD-EVP-ORIGIN-VERSION:" + Version.getVersion()));
+        Assert.assertTrue(request.getHeaders().contains("DD-EVP-ORIGIN-VERSION:" + Project.getVersion()));
     }
 
     @Test

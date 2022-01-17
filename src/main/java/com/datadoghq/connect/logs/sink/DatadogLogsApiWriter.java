@@ -5,7 +5,7 @@ This product includes software developed at Datadog (https://www.datadoghq.com/)
 
 package com.datadoghq.connect.logs.sink;
 
-import com.datadoghq.connect.logs.util.Version;
+import com.datadoghq.connect.logs.util.Project;
 import com.google.gson.*;
 import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
@@ -177,7 +177,7 @@ public class DatadogLogsApiWriter {
 
         Package p = getClass().getPackage();
         con.setRequestProperty("DD-EVP-ORIGIN", p.getName());
-        con.setRequestProperty("DD-EVP-ORIGIN-VERSION", Version.getVersion());
+        con.setRequestProperty("DD-EVP-ORIGIN-VERSION", Project.getVersion());
     }
 
     private byte[] compress(String str) throws IOException {
