@@ -72,14 +72,7 @@ public class DatadogLogsApiWriter {
             return;
         }
 
-        String protocol = config.useSSL ? "https://" : "http://";
-
-        URL url = new URL(
-                protocol
-                        + config.url
-                        + "/v1/input/"
-                        + config.ddApiKey
-        );
+        URL url = config.getURL();
 
         sendRequest(content, url);
     }
