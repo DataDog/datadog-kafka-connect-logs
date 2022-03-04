@@ -18,8 +18,10 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class DatadogLogsApiWriterTest {
     private Map<String, String> props;
@@ -109,8 +111,15 @@ public class DatadogLogsApiWriterTest {
         RequestInfo request1 = restHelper.getCapturedRequests().get(0);
         RequestInfo request2 = restHelper.getCapturedRequests().get(1);
 
-        Assert.assertEquals("[{\"message\":\"someValue1\",\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic1\"}]", request2.getBody());
-        Assert.assertEquals("[{\"message\":\"someValue2\",\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic2\"}]", request1.getBody());
+        Set<String> requestBodySetActual = new HashSet<String>() {{
+            add(request1.getBody()); 
+            add (request2.getBody());
+        }};
+        Set<String> requestBodySetExpected = new HashSet<String>() {{
+            add("[{\"message\":\"someValue1\",\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic1\"}]"); 
+            add("[{\"message\":\"someValue2\",\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic2\"}]");
+        }};
+        Assert.assertEquals(requestBodySetExpected, requestBodySetActual);
     }
 
     @Test(expected = IOException.class)
