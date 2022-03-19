@@ -112,7 +112,7 @@ public class DatadogLogsApiWriterTest {
         RequestInfo request2 = restHelper.getCapturedRequests().get(1);
 
         Set<String> requestBodySetActual = new HashSet<String>() {{
-            add(request1.getBody()); 
+            add(request1.getBody());
             add (request2.getBody());
         }};
         Set<String> requestBodySetExpected = new HashSet<String>() {{
