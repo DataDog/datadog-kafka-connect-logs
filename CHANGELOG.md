@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 1.1.1 / 2022-06-07
+
+### Changes
+* Fix CVE-2022-25647 by upgrading the version of `com.google.code.gson` to `2.8.9`.
+
 # 1.1.0 / 2022-01-17
 
 ### Changes
