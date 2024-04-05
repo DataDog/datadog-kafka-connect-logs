@@ -4,7 +4,7 @@ Changelog
 # 1.1.2 / TBC
 
 ### Changes
-* Removed call to `disconnect` on `HttpURLConnection` to encourage connection resuse.
+* Removed call to `disconnect` on `HttpURLConnection` to encourage connection reuse.
 
 # 1.1.1 / 2022-06-07
 
