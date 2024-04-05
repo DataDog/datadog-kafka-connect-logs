@@ -167,7 +167,6 @@ public class DatadogLogsApiWriter {
         String response = getOutput(con.getInputStream());
 
         log.debug("Response content: " + response);
-        con.disconnect();
     }
 
     private void setRequestProperties(HttpURLConnection con) {
