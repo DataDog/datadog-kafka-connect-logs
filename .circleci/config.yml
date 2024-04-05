@@ -5,7 +5,7 @@ build_steps: &build_steps
   steps:
     - checkout
     - setup_remote_docker
-    - run: mvn test
+    - run: ./mvnw test
 
 jobs:
   test_openjdk8:
