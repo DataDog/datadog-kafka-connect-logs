@@ -11,7 +11,7 @@
         <url>https://www.datadoghq.com/</url>
     </organization>
     <name>datadog-kafka-connect-logs</name>
-    <version>1.1.1</version>
+    <version>1.1.2-SNAPSHOT</version>
     <description>A Kafka Connect Connector that sends Kafka Connect records as logs to the Datadog API.</description>
     <url>https://github.com/DataDog/datadog-kafka-connect-logs</url>
 
