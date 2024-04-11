@@ -68,7 +68,7 @@ public class DatadogLogsApiWriter {
 
     private void sendBatch(String topic) throws IOException {
         JsonArray content = formatBatch(topic);
-        if (content.size() == 0) {
+        if (content.isEmpty()) {
             log.debug("Nothing to send; Skipping the HTTP request.");
             return;
         }

@@ -46,15 +46,15 @@ public class DatadogLogsSinkTask extends SinkTask {
     public void put(Collection<SinkRecord> records) {
         Instant start = Instant.now();
 
-        final SinkRecord first = records.iterator().next();
         final int recordsCount = records.size();
-        log.debug(
-                "Received {} records. First record Kafka coordinates:({}-{}-{})",
-                recordsCount, first.topic(), first.kafkaPartition(), first.kafkaOffset()
-        );
+        log.debug("Received {} records", recordsCount);
 
-        if (records.isEmpty()) {
-            return;
+        if (!records.isEmpty()) {
+            final SinkRecord first = records.iterator().next();
+            log.debug(
+                    "First record Kafka coordinates: ({}-{}-{})",
+                    first.topic(), first.kafkaPartition(), first.kafkaOffset()
+            );
         }
 
         try {
