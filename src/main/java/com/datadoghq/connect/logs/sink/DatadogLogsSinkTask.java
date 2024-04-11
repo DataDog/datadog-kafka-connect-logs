@@ -14,6 +14,8 @@ import org.apache.kafka.connect.sink.SinkTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -42,9 +44,7 @@ public class DatadogLogsSinkTask extends SinkTask {
 
     @Override
     public void put(Collection<SinkRecord> records) {
-        if (records.isEmpty()) {
-            return;
-        }
+        Instant start = Instant.now();
 
         final SinkRecord first = records.iterator().next();
         final int recordsCount = records.size();
@@ -53,8 +53,16 @@ public class DatadogLogsSinkTask extends SinkTask {
                 recordsCount, first.topic(), first.kafkaPartition(), first.kafkaOffset()
         );
 
+        if (records.isEmpty()) {
+            return;
+        }
+
         try {
             writer.write(records);
+            log.debug(
+                    "Wrote {} records in {}ms",
+                    recordsCount, Duration.between(start, Instant.now()).toMillis()
+            );
         } catch (Exception e) {
             log.warn(
                     "Write of {} records failed, remaining retries: {}",
@@ -68,7 +76,7 @@ public class DatadogLogsSinkTask extends SinkTask {
             } else {
                 initWriter();
                 long sleepTimeMs = computeRetryWaitMs(
-                        config.retryMax-remainingRetries,
+                        config.retryMax - remainingRetries,
                         config.retryBackoffMs
                 );
                 remainingRetries--;
