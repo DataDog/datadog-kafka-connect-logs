@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 public class DatadogLogsSinkTask extends SinkTask {
     private static final Logger log = LoggerFactory.getLogger(DatadogLogsSinkTask.class);
     private static final long MAX_RETRY_TIME_MS = TimeUnit.MINUTES.toMillis(10);
+    private static final long threadId = Thread.currentThread().getId();
 
     DatadogLogsSinkConnectorConfig config;
     DatadogLogsApiWriter writer;
@@ -29,8 +30,8 @@ public class DatadogLogsSinkTask extends SinkTask {
 
     @Override
     public void start(Map<String, String> settings) {
-        log.info("Starting Sink Task.");
         config = new DatadogLogsSinkConnectorConfig(settings);
+        log.info("Starting task with config={}", config);
         initWriter();
         remainingRetries = config.retryMax;
     }
@@ -48,7 +49,7 @@ public class DatadogLogsSinkTask extends SinkTask {
         final SinkRecord first = records.iterator().next();
         final int recordsCount = records.size();
         log.debug(
-                "Received {} records. First record Kafka coordinates:({}-{}-{}). Writing them to the API...",
+                "Received {} records. First record Kafka coordinates:({}-{}-{})",
                 recordsCount, first.topic(), first.kafkaPartition(), first.kafkaOffset()
         );
 
@@ -91,7 +92,7 @@ public class DatadogLogsSinkTask extends SinkTask {
 
     @Override
     public void stop() {
-        log.info("Stopping task for {}", context.configs().get("name"));
+        log.info("Stopping task with config={}", config);
     }
 
     @Override
