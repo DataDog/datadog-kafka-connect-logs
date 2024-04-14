@@ -171,6 +171,7 @@ public class DatadogLogsApiWriter {
         con.setRequestProperty("DD-API-KEY", config.ddApiKey);
         con.setRequestProperty("DD-EVP-ORIGIN", Project.getName());
         con.setRequestProperty("DD-EVP-ORIGIN-VERSION", Project.getVersion());
+        con.setRequestProperty("User-Agent", Project.getName() + "/" + Project.getVersion());
     }
 
     private byte[] compress(String str) throws IOException {
