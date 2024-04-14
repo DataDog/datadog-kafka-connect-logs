@@ -111,7 +111,7 @@ A REST call can be executed against one of the cluster instances, and the config
 
 To improve performance of the connector, you can try the following options:
 
-* Update the number of records fetch per poll by setting
+* Update the number of records fetched per poll by setting
   `consumer.override.max.poll.records` in the plugin configuration. This plugin
   sends batches of records synchronously with each poll so a low number of records
   per poll will reduce throughput. Consider setting this to 500 or 1000.
