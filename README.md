@@ -117,7 +117,7 @@ To improve performance of the connector, you can try the following options:
   per poll will reduce throughput. Consider setting this to 500 or 1000.
 * Increase the number of parallel tasks by adjusting the `tasks.max` parameter.
   Only do this if the hardware is underutilized, such as low CPU, low memory
-  usage and low data injection throughput. Do not set more tasks than
+  usage, and low data injection throughput. Do not set more tasks than
   partitions.
 * Increase hardware resources on cluster nodes in case of resource exhaustion,
   such as high CPU, or high memory usage.
