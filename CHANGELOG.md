@@ -1,10 +1,13 @@
 Changelog
 =========
 
-# 1.1.2 / TBC
+# 1.1.2 / 2024-04-16
 
 ### Changes
+
 * Removed call to `disconnect` on `HttpURLConnection` to encourage connection reuse.
+* Revamped debug and trace level logging to make debug logging more useful
+* Added `User-Agent` header to requests
 
 # 1.1.1 / 2022-06-07
 
