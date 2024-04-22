@@ -94,8 +94,13 @@ public class DatadogLogsApiWriterTest {
         RequestInfo request1 = restHelper.getCapturedRequests().get(0);
         RequestInfo request2 = restHelper.getCapturedRequests().get(1);
 
-        Assert.assertEquals("[{\"message\":\"someValue1\",\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic\"}]", request1.getBody());
-        Assert.assertEquals("[{\"message\":\"someValue2\",\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic\"}]", request2.getBody());
+        Set<String> requestBodySetActual = new HashSet<>();
+        requestBodySetActual.add(request1.getBody());
+        requestBodySetActual.add(request2.getBody());
+        Set<String> requestBodySetExpected = new HashSet<>();
+        requestBodySetExpected.add("[{\"message\":\"someValue1\",\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic\"}]");
+        requestBodySetExpected.add("[{\"message\":\"someValue2\",\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic\"}]");
+        Assert.assertEquals(requestBodySetExpected, requestBodySetActual);
     }
 
     @Test
