@@ -1,6 +1,19 @@
 Changelog
 =========
 
+# 1.1.2 / 2024-04-16
+
+### Changes
+
+* Removed call to `disconnect` on `HttpURLConnection` to encourage connection reuse.
+* Revamped debug and trace level logging to make debug logging more useful
+* Added `User-Agent` header to requests
+
+# 1.1.1 / 2022-06-07
+
+### Changes
+* Fix CVE-2022-25647 by upgrading the version of `com.google.code.gson` to `2.8.9`.
+
 # 1.1.0 / 2022-01-17
 
 ### Changes

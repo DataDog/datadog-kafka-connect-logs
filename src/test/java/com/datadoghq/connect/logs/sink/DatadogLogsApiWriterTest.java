@@ -62,6 +62,7 @@ public class DatadogLogsApiWriterTest {
         Assert.assertTrue(request.getHeaders().contains("DD-API-KEY:" + apiKey));
         Assert.assertTrue(request.getHeaders().contains("DD-EVP-ORIGIN:datadog-kafka-connect-logs"));
         Assert.assertTrue(request.getHeaders().contains("DD-EVP-ORIGIN-VERSION:" + Project.getVersion()));
+        Assert.assertTrue(request.getHeaders().contains("User-Agent:datadog-kafka-connect-logs/" + Project.getVersion()));
     }
 
     @Test

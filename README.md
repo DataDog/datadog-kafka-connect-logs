@@ -111,9 +111,16 @@ A REST call can be executed against one of the cluster instances, and the config
 
 To improve performance of the connector, you can try the following options:
 
-* Increase the number of parallel tasks by adjusting the `tasks.max` parameter. Only do this if the hardware is 
-underutilized, such as low CPU, low memory usage and low data injection throughput. Do not set more tasks than partitions.
-* Increase hardware resources on cluster nodes in case of resource exhaustion, such as high CPU, or high memory usage.
+* Update the number of records fetched per poll by setting
+  `consumer.override.max.poll.records` in the plugin configuration. This plugin
+  sends batches of records synchronously with each poll so a low number of records
+  per poll will reduce throughput. Consider setting this to 500 or 1000.
+* Increase the number of parallel tasks by adjusting the `tasks.max` parameter.
+  Only do this if the hardware is underutilized, such as low CPU, low memory
+  usage, and low data injection throughput. Do not set more tasks than
+  partitions.
+* Increase hardware resources on cluster nodes in case of resource exhaustion,
+  such as high CPU, or high memory usage.
 * Increase the number of Kafka Connect nodes.
 
 ## Single Message Transforms

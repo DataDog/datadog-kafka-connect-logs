@@ -11,7 +11,7 @@
         <url>https://www.datadoghq.com/</url>
     </organization>
     <name>datadog-kafka-connect-logs</name>
-    <version>1.1.0</version>
+    <version>1.1.2</version>
     <description>A Kafka Connect Connector that sends Kafka Connect records as logs to the Datadog API.</description>
     <url>https://github.com/DataDog/datadog-kafka-connect-logs</url>
 
@@ -47,7 +47,7 @@
         <jetty.version>9.4.41.v20210516</jetty.version>
         <junit.version>4.13.1</junit.version>
         <java.version>1.8</java.version>
-        <gson.version>2.8.6</gson.version>
+        <gson.version>2.8.9</gson.version>
         <slf4j.version>1.7.32</slf4j.version>
 
         <kafka-connect-maven-plugin.version>0.11.3</kafka-connect-maven-plugin.version>
@@ -112,7 +112,7 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
-    </dependencies>
+      </dependencies>
 
     <build>
         <plugins>
@@ -159,11 +159,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven-surefire-plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>io.confluent</groupId>
@@ -223,4 +218,42 @@
             </resource>
         </resources>
     </build>
+
+    <profiles>
+      <profile>
+        <id>old_jdk</id>
+        <activation>
+          <jdk>[,1.17)</jdk>
+        </activation>
+        <build>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <version>${maven-surefire-plugin.version}</version>
+            </plugin>
+          </plugins>
+        </build>
+      </profile>
+      <profile>
+        <id>new_jdk</id>
+        <activation>
+          <jdk>[1.17,]</jdk>
+        </activation>
+        <build>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <version>${maven-surefire-plugin.version}</version>
+              <configuration>
+                <argLine>
+                  --add-opens=java.base/java.lang=ALL-UNNAMED
+                </argLine>
+              </configuration>
+            </plugin>
+          </plugins>
+        </build>
+      </profile>
+    </profiles>
 </project>

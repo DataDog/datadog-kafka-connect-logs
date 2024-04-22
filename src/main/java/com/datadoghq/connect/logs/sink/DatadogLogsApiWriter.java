@@ -68,7 +68,7 @@ public class DatadogLogsApiWriter {
 
     private void sendBatch(String topic) throws IOException {
         JsonArray content = formatBatch(topic);
-        if (content.size() == 0) {
+        if (content.isEmpty()) {
             log.debug("Nothing to send; Skipping the HTTP request.");
             return;
         }
@@ -142,10 +142,11 @@ public class DatadogLogsApiWriter {
         con.setRequestMethod("POST");
         setRequestProperties(con);
 
+        log.trace("Submitting HTTP request to {} with body {}", con.getURL(), requestContent);
         DataOutputStream output = new DataOutputStream(con.getOutputStream());
         output.write(compressedPayload);
         output.close();
-        log.debug("Submitted payload: " + requestContent);
+        log.trace("HTTP request submitted");
 
         // get response
         int status = con.getResponseCode();
@@ -161,13 +162,7 @@ public class DatadogLogsApiWriter {
                     + ", Submitted payload: " + content);
         }
 
-        log.debug("Response code: " + status + ", " + con.getResponseMessage());
-
-        // write the response to the log
-        String response = getOutput(con.getInputStream());
-
-        log.debug("Response content: " + response);
-        con.disconnect();
+        log.trace("Received HTTP response {} {} with body {}", status, con.getResponseMessage(), getOutput(con.getInputStream()));
     }
 
     private void setRequestProperties(HttpURLConnection con) {
@@ -176,6 +171,7 @@ public class DatadogLogsApiWriter {
         con.setRequestProperty("DD-API-KEY", config.ddApiKey);
         con.setRequestProperty("DD-EVP-ORIGIN", Project.getName());
         con.setRequestProperty("DD-EVP-ORIGIN-VERSION", Project.getVersion());
+        con.setRequestProperty("User-Agent", Project.getName() + "/" + Project.getVersion());
     }
 
     private byte[] compress(String str) throws IOException {
@@ -197,5 +193,4 @@ public class DatadogLogsApiWriter {
 
         return errorOutput.toString(StandardCharsets.UTF_8.name());
     }
-
 }
