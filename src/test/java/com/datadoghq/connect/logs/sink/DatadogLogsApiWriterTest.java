@@ -10,6 +10,8 @@ import com.datadoghq.connect.logs.sink.util.RestHelper;
 import com.datadoghq.connect.logs.util.Project;
 
 import org.apache.kafka.connect.sink.SinkRecord;
+import org.apache.kafka.connect.data.Decimal;
+import org.apache.kafka.connect.data.Schema;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -22,6 +24,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 public class DatadogLogsApiWriterTest {
     private Map<String, String> props;
@@ -63,6 +67,22 @@ public class DatadogLogsApiWriterTest {
         Assert.assertTrue(request.getHeaders().contains("DD-EVP-ORIGIN:datadog-kafka-connect-logs"));
         Assert.assertTrue(request.getHeaders().contains("DD-EVP-ORIGIN-VERSION:" + Project.getVersion()));
         Assert.assertTrue(request.getHeaders().contains("User-Agent:datadog-kafka-connect-logs/" + Project.getVersion()));
+    }
+
+    @Test
+    public void writer_handles_bigDecimal() throws IOException {
+        DatadogLogsSinkConnectorConfig config = new DatadogLogsSinkConnectorConfig(false, 500, props);
+        DatadogLogsApiWriter writer = new DatadogLogsApiWriter(config);
+
+        Schema schema = Decimal.schema(2);
+        BigDecimal value = new BigDecimal(new BigInteger("156"), 2);
+
+        records.add(new SinkRecord("someTopic", 0, null, "someKey", schema, value, 0));
+        writer.write(records);
+
+        Assert.assertEquals(1, restHelper.getCapturedRequests().size());
+        RequestInfo request = restHelper.getCapturedRequests().get(0);
+        Assert.assertEquals("[{\"message\":1.56,\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic\"}]", request.getBody());
     }
 
     @Test
