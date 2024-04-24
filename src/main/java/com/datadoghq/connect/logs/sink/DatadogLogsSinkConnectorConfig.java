@@ -33,6 +33,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     private static final String DD_URL_FORMAT_FROM_SITE = "http-intake.logs.%s:443";
     private static final String DEFAULT_DD_SITE = "datadoghq.com";
     public static final String DEFAULT_DD_URL = String.format(DD_URL_FORMAT_FROM_SITE, DEFAULT_DD_SITE);
+    public static final String USE_RECORD_TIMESTAMP = "datadog.use.record.timestamp";
 
     // Respect limit documented at https://docs.datadoghq.com/api/?lang=bash#logs
     public final Integer ddMaxBatchLength;
@@ -51,6 +52,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     public final Integer proxyPort;
     public final Integer retryMax;
     public final Integer retryBackoffMs;
+    public final boolean useRecordTimestamp;
 
     public static final ConfigDef CONFIG_DEF = baseConfigDef();
 
@@ -72,6 +74,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         this.ddUrl = getString(DD_URL);
         this.ddSite = getString(DD_SITE);
         this.ddMaxBatchLength = ddMaxBatchLength;
+        this.useRecordTimestamp = getBoolean(USE_RECORD_TIMESTAMP);
         validateConfig();
     }
 
@@ -166,7 +169,13 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
                 ++orderInGroup,
                 Width.LONG,
                 "Datadog logs site"
-        );
+        ).define(
+                USE_RECORD_TIMESTAMP,
+                Type.BOOLEAN,
+                false,
+                null,
+                Importance.MEDIUM,
+                "Valid settings are true or false. When set to `true`, The timestamp is retrieved from the Kafka record and passed to Datadog");
     }
 
     private static void addProxyConfigs(ConfigDef configDef) {
