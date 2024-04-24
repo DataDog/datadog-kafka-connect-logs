@@ -32,7 +32,12 @@ public class DatadogLogsApiWriter {
         this.config = config;
         this.batches = new HashMap<>();
         this.jsonConverter = new JsonConverter();
-        jsonConverter.configure(Collections.singletonMap("schemas.enable", "false"), false);
+
+        Map<String,String> jsonConverterConfig = new HashMap<String,String>();
+        jsonConverterConfig.put("schemas.enable", "false");
+        jsonConverterConfig.put("decimal.format", "NUMERIC");
+
+        jsonConverter.configure(jsonConverterConfig, false);
     }
 
     /**
