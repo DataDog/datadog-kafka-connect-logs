@@ -157,7 +157,7 @@ public class DatadogLogsApiWriterTest {
 
     @Test
     public void writer_withUseRecordTimeStampEnabled_shouldPopulateRecordTimestamp() throws IOException {
-        props.put(DatadogLogsSinkConnectorConfig.USE_RECORD_TIMESTAMP, "true");
+        props.put(DatadogLogsSinkConnectorConfig.ADD_PUBLISHED_DATE, "true");
         DatadogLogsSinkConnectorConfig config = new DatadogLogsSinkConnectorConfig(false, 2, props);
         DatadogLogsApiWriter writer = new DatadogLogsApiWriter(config);
 

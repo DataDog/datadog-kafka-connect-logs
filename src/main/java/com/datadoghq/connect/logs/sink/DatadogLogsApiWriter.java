@@ -110,7 +110,7 @@ public class DatadogLogsApiWriter {
         String tags = "topic:" + topic;
         content.add("message", message);
         content.add("ddsource", new JsonPrimitive(config.ddSource));
-        if (config.useRecordTimestamp && timestamp != null) {
+        if (config.addPublishedDate && timestamp != null) {
             content.add("published_date", new JsonPrimitive(timestamp));
         }
 
