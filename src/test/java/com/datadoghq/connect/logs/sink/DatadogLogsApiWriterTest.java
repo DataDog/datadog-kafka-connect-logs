@@ -9,6 +9,7 @@ import com.datadoghq.connect.logs.sink.util.RequestInfo;
 import com.datadoghq.connect.logs.sink.util.RestHelper;
 import com.datadoghq.connect.logs.util.Project;
 
+import org.apache.kafka.common.record.TimestampType;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.data.Decimal;
 import org.apache.kafka.connect.data.Schema;
@@ -172,5 +173,25 @@ public class DatadogLogsApiWriterTest {
         RequestInfo request = restHelper.getCapturedRequests().get(0);
 
         Assert.assertEquals("[{\"message\":\"someValue1\",\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic,team:agent-core,author:berzan\",\"hostname\":\"test-host\",\"service\":\"test-service\"},{\"message\":\"someValue2\",\"ddsource\":\"kafka-connect\",\"ddtags\":\"topic:someTopic,team:agent-core,author:berzan\",\"hostname\":\"test-host\",\"service\":\"test-service\"}]", request.getBody());
+    }
+
+    @Test
+    public void writer_withUseRecordTimeStampEnabled_shouldPopulateRecordTimestamp() throws IOException {
+        props.put(DatadogLogsSinkConnectorConfig.ADD_PUBLISHED_DATE, "true");
+        DatadogLogsSinkConnectorConfig config = new DatadogLogsSinkConnectorConfig(false, 2, props);
+        DatadogLogsApiWriter writer = new DatadogLogsApiWriter(config);
+
+
+        long recordTime = 1713974401224L;
+
+        records.add(new SinkRecord("someTopic", 0, null, "someKey", null, "someValue1", 0, recordTime, TimestampType.CREATE_TIME));
+        records.add(new SinkRecord("someTopic", 0, null, "someKey", null, "someValue2", 0, recordTime, TimestampType.CREATE_TIME));
+        writer.write(records);
+
+        Assert.assertEquals(1, restHelper.getCapturedRequests().size());
+
+        RequestInfo request = restHelper.getCapturedRequests().get(0);
+        System.out.println(request.getBody());
+        Assert.assertEquals("[{\"message\":\"someValue1\",\"ddsource\":\"kafka-connect\",\"published_date\":1713974401224,\"ddtags\":\"topic:someTopic\"},{\"message\":\"someValue2\",\"ddsource\":\"kafka-connect\",\"published_date\":1713974401224,\"ddtags\":\"topic:someTopic\"}]", request.getBody());
     }
 }

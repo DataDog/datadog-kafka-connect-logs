@@ -97,7 +97,7 @@ public class DatadogLogsApiWriter {
             }
 
             JsonElement recordJSON = recordToJSON(record);
-            JsonObject message = populateMetadata(topic, recordJSON);
+            JsonObject message = populateMetadata(topic, recordJSON, record.timestamp());
             batchRecords.add(message);
         }
 
@@ -110,11 +110,14 @@ public class DatadogLogsApiWriter {
         return new Gson().fromJson(jsonPayload, JsonElement.class);
     }
 
-    private JsonObject populateMetadata(String topic, JsonElement message) {
+    private JsonObject populateMetadata(String topic, JsonElement message, Long timestamp) {
         JsonObject content = new JsonObject();
         String tags = "topic:" + topic;
         content.add("message", message);
         content.add("ddsource", new JsonPrimitive(config.ddSource));
+        if (config.addPublishedDate && timestamp != null) {
+            content.add("published_date", new JsonPrimitive(timestamp));
+        }
 
         if (config.ddTags != null) {
             tags += "," + config.ddTags;
