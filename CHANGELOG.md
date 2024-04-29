@@ -1,6 +1,16 @@
 Changelog
 =========
 
+# 1.2.0 / 2024-04-29
+
+### Changes
+
+* A new `datadog.add_published_date` option was added. When set to `true` the
+  `published_date` field is added to all published events using the Kafka
+  message timestamp as the value. Thanks to @nyk0322.
+* Decimal values are now encoded as numeric types when sending to Datadog rather
+  than base64-encoded bytes.
+
 # 1.1.2 / 2024-04-16
 
 ### Changes
