@@ -1,6 +1,6 @@
 # Datadog Kafka Connect Logs
 
-`datadog-kafka-connect-logs` is a [Kafka Connector](http://kafka.apache.org/documentation.html#connect) for sending 
+`datadog-kafka-connect-logs` is a [Kafka Connector](http://kafka.apache.org/documentation.html#connect) for sending
 records from Kafka as logs to the [Datadog Logs Intake API](https://docs.datadoghq.com/api/v1/logs/).
 
 It is a plugin meant to be installed on a [Kafka Connect Cluster](https://docs.confluent.io/current/connect/) running
@@ -12,7 +12,7 @@ besides a [Kafka Broker](https://www.confluent.io/what-is-apache-kafka/).
 2. Java 8 and above.
 3. Confluent Platform 4.0.x and above (optional).
 
-To install the plugin, one must have a working instance of Kafka Connect connected to a Kafka Broker. See also 
+To install the plugin, one must have a working instance of Kafka Connect connected to a Kafka Broker. See also
 [Confluent's](https://www.confluent.io/product/confluent-platform/) documentation for easily setting this up.
 
 ## Installation and Setup
@@ -24,25 +24,25 @@ See [Confluent's documentation](https://docs.confluent.io/current/connect/managi
 ### Download from Github
 
 Download the latest version from the GitHub [releases page](https://github.com/DataDog/datadog-kafka-connect-logs/releases).
-Also see [Confluent's documentation](https://docs.confluent.io/current/connect/managing/community.html) on installing 
+Also see [Confluent's documentation](https://docs.confluent.io/current/connect/managing/community.html) on installing
 community connectors.
 
 ### Build from Source
 
 1. Clone the repo from https://github.com/DataDog/datadog-kafka-connect-logs
 2. Verify that Java8 JRE or JDK is installed.
-3. Run `mvn clean compile package`. This will build the jar in the `/target` directory. The name will be 
-`datadog-kafka-connect-logs-[VERSION].jar`.
+3. Run `mvn clean compile package`. This will build the jar in the `/target` directory. The name will be
+   `datadog-kafka-connect-logs-[VERSION].jar`.
 4. The zip file for use on [Confluent Hub](https://www.confluent.io/hub/) can be found in `target/components/packages`.
 
 ## Quick Start
 
 1. To install the plugin, place the plugin's jar file (see [previous section](#installation-and-setup) on how to download or build it)
-in or under the location specified in `plugin.path` . If you use Confluent Platform, simply run 
-`confluent-hub install target/components/packages/<connector-zip-file>`.
+   in or under the location specified in `plugin.path` . If you use Confluent Platform, simply run
+   `confluent-hub install target/components/packages/<connector-zip-file>`.
 2. Restart your Kafka Connect instance.
-3. Run the following command to manually create connector tasks. Adjust `topics` to configure the Kafka topic to be 
-ingested and set your Datadog `api_key`.
+3. Run the following command to manually create connector tasks. Adjust `topics` to configure the Kafka topic to be
+   ingested and set your Datadog `api_key`.
 
 ```
   curl localhost:8083/connectors -X POST -H "Content-Type: application/json" -d '{
@@ -56,8 +56,8 @@ ingested and set your Datadog `api_key`.
   }'    
 ```
 
-4. You can verify that data is ingested to the Datadog platform by searching for `source:kafka-connect` in the Log 
-Explorer tab
+4. You can verify that data is ingested to the Datadog platform by searching for `source:kafka-connect` in the Log
+   Explorer tab
 5. Use the following commands to check status, and manage connectors and tasks:
 
 ```
@@ -107,6 +107,7 @@ A REST call can be executed against one of the cluster instances, and the config
 | `datadog.retry.max` | The number of retries before the output plugin stops.                                                                                                      | `5` ||
 | `datadog.retry.backoff_ms` | The time in milliseconds to wait following an error before a retry attempt is made.                                                                        | `3000` ||
 | `datadog.add_published_date` | Valid settings are true or false. When set to `true`, The timestamp is retrieved from the Kafka record and passed to Datadog as `published_date`           ||
+| `datadog.parse_record_headers` | Valid settings are true or false. When set to `true`, Kafka Record Headers will be parsed and passed to DataDog as `kafkaheaders` object |`false`| 
 
 ### Troubleshooting performance
 
@@ -126,7 +127,7 @@ To improve performance of the connector, you can try the following options:
 
 ## Single Message Transforms
 
-Kafka Connect supports Single Message Transforms that let you change the structure or content of a message. To 
+Kafka Connect supports Single Message Transforms that let you change the structure or content of a message. To
 experiment with this feature, try adding these lines to your sink connector configuration:
 
 ```properties
@@ -135,7 +136,7 @@ transforms.addExtraField.type=org.apache.kafka.connect.transforms.InsertField$Va
 transforms.addExtraField.static.field=extraField
 transforms.addExtraField.static.value=extraValue
 ```
-Now if you restart the sink connector and send some more test messages, each new record should have a `extraField` field 
+Now if you restart the sink connector and send some more test messages, each new record should have a `extraField` field
 with value `value`. For more in-depth video, see [confluent's documentation](https://docs.confluent.io/current/connect/transforms/index.html).
 
 ## Testing
@@ -146,14 +147,14 @@ To run the supplied unit tests, run `mvn test` from the root of the project.
 
 ### System Tests
 
-We use Confluent Platform for a batteries-included Kafka environment for local testing. Follow the guide 
+We use Confluent Platform for a batteries-included Kafka environment for local testing. Follow the guide
 [here](https://docs.confluent.io/current/quickstart/ce-quickstart.html) to install the Confluent Platform.
 
-Then, install the [Confluent Kafka Datagen Connector](https://github.com/confluentinc/kafka-connect-datagen) to create 
-sample data of arbitrary types. Install this Datadog Logs Connector by running 
+Then, install the [Confluent Kafka Datagen Connector](https://github.com/confluentinc/kafka-connect-datagen) to create
+sample data of arbitrary types. Install this Datadog Logs Connector by running
 `confluent-hub install target/components/packages/<connector-zip-file>`.
 
-In the `/test` directory there are some `.json` configuration files to make it easy to create Connectors. There are 
+In the `/test` directory there are some `.json` configuration files to make it easy to create Connectors. There are
 configurations for both the Datagen Connector with various datatypes, as well as the Datadog Logs Connector. To the latter,
 you will need to add a valid Datadog API Key for once you upload the `.json` to Confluent Platform.
 

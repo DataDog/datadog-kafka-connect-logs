@@ -34,6 +34,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     private static final String DEFAULT_DD_SITE = "datadoghq.com";
     public static final String DEFAULT_DD_URL = String.format(DD_URL_FORMAT_FROM_SITE, DEFAULT_DD_SITE);
     public static final String ADD_PUBLISHED_DATE = "datadog.add_published_date";
+    public static final String PARSE_RECORD_HEADERS = "datadog.parse_record_headers";
 
     // Respect limit documented at https://docs.datadoghq.com/api/?lang=bash#logs
     public final Integer ddMaxBatchLength;
@@ -53,6 +54,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
     public final Integer retryMax;
     public final Integer retryBackoffMs;
     public final boolean addPublishedDate;
+    public final boolean parseRecordHeaders;
 
     public static final ConfigDef CONFIG_DEF = baseConfigDef();
 
@@ -75,6 +77,7 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
         this.ddSite = getString(DD_SITE);
         this.ddMaxBatchLength = ddMaxBatchLength;
         this.addPublishedDate = getBoolean(ADD_PUBLISHED_DATE);
+        this.parseRecordHeaders = getBoolean(PARSE_RECORD_HEADERS);
         validateConfig();
     }
 
@@ -175,7 +178,13 @@ public class DatadogLogsSinkConnectorConfig extends AbstractConfig {
                 false,
                 null,
                 Importance.MEDIUM,
-                "Valid settings are true or false. When set to `true`, The timestamp is retrieved from the Kafka record and passed to Datadog as `published_date`");
+                "Valid settings are true or false. When set to `true`, The timestamp is retrieved from the Kafka record and passed to Datadog as `published_date`"
+        ).define(PARSE_RECORD_HEADERS,
+                Type.BOOLEAN,
+                false,
+                null,
+                Importance.MEDIUM,
+                "Valid settings are true or false. When set to `true`, Kafka Record Headers will be parsed and passed to DataDog as `kafkaheaders` object");
     }
 
     private static void addProxyConfigs(ConfigDef configDef) {
