@@ -153,7 +153,7 @@ Then, install the [Confluent Kafka Datagen Connector](https://github.com/conflue
 sample data of arbitrary types. Install this Datadog Logs Connector by running
 `confluent-hub install target/components/packages/<connector-zip-file>`.
 
-In the `/test` directory there are some `.json` configuration files to make it easy to create Connectors. There are
+In the `/test` directory, there are some `.json` configuration files to make it easy to create Connectors. There are
 configurations for both the Datagen Connector with various datatypes, as well as the Datadog Logs Connector. To the latter,
 you will need to add a valid Datadog API Key for once you upload the `.json` to Confluent Platform.
 
