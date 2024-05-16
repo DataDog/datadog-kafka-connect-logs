@@ -44,13 +44,11 @@ public class DatadogLogsApiWriter {
     private final DatadogLogsSinkConnectorConfig config;
     private final Map<String, List<SinkRecord>> batches;
     private final JsonConverter jsonConverter;
-    private final Gson gson;
 
     public DatadogLogsApiWriter(DatadogLogsSinkConnectorConfig config) {
         this.config = config;
         this.batches = new HashMap<>();
         this.jsonConverter = new JsonConverter();
-        this.gson = new Gson();
 
         Map<String, String> jsonConverterConfig = new HashMap<>();
         jsonConverterConfig.put("schemas.enable", "false");
@@ -128,6 +126,8 @@ public class DatadogLogsApiWriter {
         Map<String, Object> headerMap = stream(sinkRecord.headers().spliterator(), false)
                 .collect(toMap(Header::key, Header::value));
 
+        Gson gson = new Gson();
+
         String jsonString = gson.toJson(headerMap);
 
         return gson.fromJson(jsonString, JsonElement.class);
@@ -136,7 +136,7 @@ public class DatadogLogsApiWriter {
     private JsonElement recordToJSON(SinkRecord record) {
         byte[] rawJSONPayload = jsonConverter.fromConnectData(record.topic(), record.valueSchema(), record.value());
         String jsonPayload = new String(rawJSONPayload, StandardCharsets.UTF_8);
-        return gson.fromJson(jsonPayload, JsonElement.class);
+        return new Gson().fromJson(jsonPayload, JsonElement.class);
     }
 
     private JsonObject populateMetadata(String topic, JsonElement message, Long timestamp, Supplier<JsonElement> kafkaHeaders) {
