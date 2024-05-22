@@ -8,31 +8,34 @@ package com.datadoghq.connect.logs.sink;
 import com.datadoghq.connect.logs.sink.util.RequestInfo;
 import com.datadoghq.connect.logs.sink.util.RestHelper;
 import com.datadoghq.connect.logs.util.Project;
-
 import org.apache.kafka.common.record.TimestampType;
-import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.data.Decimal;
 import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.data.SchemaBuilder;
+import org.apache.kafka.connect.data.Struct;
+import org.apache.kafka.connect.header.ConnectHeaders;
+import org.apache.kafka.connect.header.Headers;
+import org.apache.kafka.connect.sink.SinkRecord;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 
 public class DatadogLogsApiWriterTest {
+    private static String apiKey = "API_KEY";
     private Map<String, String> props;
     private List<SinkRecord> records;
     private RestHelper restHelper;
-    private static String apiKey = "API_KEY";
 
     @Before
     public void setUp() throws Exception {
@@ -153,7 +156,7 @@ public class DatadogLogsApiWriterTest {
         DatadogLogsApiWriter writer = new DatadogLogsApiWriter(config);
 
         restHelper.setHttpStatusCode(429);
-        records.add(new SinkRecord("someTopic", 0, null, "someKey", null, "someValue1", 0));        
+        records.add(new SinkRecord("someTopic", 0, null, "someKey", null, "someValue1", 0));
         writer.write(records);
     }
 
@@ -193,5 +196,51 @@ public class DatadogLogsApiWriterTest {
         RequestInfo request = restHelper.getCapturedRequests().get(0);
         System.out.println(request.getBody());
         Assert.assertEquals("[{\"message\":\"someValue1\",\"ddsource\":\"kafka-connect\",\"published_date\":1713974401224,\"ddtags\":\"topic:someTopic\"},{\"message\":\"someValue2\",\"ddsource\":\"kafka-connect\",\"published_date\":1713974401224,\"ddtags\":\"topic:someTopic\"}]", request.getBody());
+    }
+
+    @Test
+    public void writer_parse_record_headers_enabled() throws IOException {
+        props.put(DatadogLogsSinkConnectorConfig.PARSE_RECORD_HEADERS, "true");
+        DatadogLogsSinkConnectorConfig config = new DatadogLogsSinkConnectorConfig(false, 2, props);
+        DatadogLogsApiWriter writer = new DatadogLogsApiWriter(config);
+
+
+        Schema keySchema = Schema.INT32_SCHEMA;
+        Schema valueSchema = SchemaBuilder.struct()
+                .field("field1", Schema.STRING_SCHEMA)
+                .field("field2", Schema.INT32_SCHEMA)
+                .build();
+
+        Integer key = 123;
+        Struct value = new Struct(valueSchema)
+                .put("field1", "value1")
+                .put("field2", 456);
+
+        Headers headers = new ConnectHeaders();
+        headers.addString("headerKey", "headerValue");
+
+        long recordTime = 1713974401224L;
+
+        SinkRecord sinkRecord = new SinkRecord("topicName", 0, keySchema, key, valueSchema, value,
+                100L, recordTime, null, headers);
+
+        records.add(sinkRecord);
+        records.add(new SinkRecord("someTopic", 0, null, "someKey", null,
+                "someValue1", 0, recordTime, TimestampType.CREATE_TIME));
+        writer.write(records);
+
+        Assert.assertEquals(2, restHelper.getCapturedRequests().size());
+
+        RequestInfo requestWithHeaders = restHelper.getCapturedRequests().get(0);
+        RequestInfo requestWithoutHeaders = restHelper.getCapturedRequests().get(1);
+
+        Set<String> requestBodySetActual = new HashSet<>();
+        requestBodySetActual.add(requestWithHeaders.getBody());
+        requestBodySetActual.add(requestWithoutHeaders.getBody());
+        Set<String> requestBodySetExpected = new HashSet<>();
+        requestBodySetExpected.add("[{\"message\":{\"field1\":\"value1\",\"field2\":456},\"ddsource\":\"kafka-connect\",\"kafkaheaders\":{\"headerKey\":\"headerValue\"},\"ddtags\":\"topic:topicName\"}]");
+        requestBodySetExpected.add("[{\"message\":\"someValue1\",\"ddsource\":\"kafka-connect\",\"kafkaheaders\":{},\"ddtags\":\"topic:someTopic\"}]");
+        Assert.assertEquals(requestBodySetExpected, requestBodySetActual);
+        props.remove(DatadogLogsSinkConnectorConfig.PARSE_RECORD_HEADERS);
     }
 }
