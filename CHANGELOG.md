@@ -1,6 +1,14 @@
 Changelog
 =========
 
+# 1.3.0 / 2024-05-23
+
+### Changes
+
+* A new `datadog.parse_record_headers` option was added. When set to `true` the
+  Kafka Record Headers are parsed and passed to DataDog as a `kafkaheaders` object.
+  Thanks to @jm1221d.
+
 # 1.2.0 / 2024-04-29
 
 ### Changes
