@@ -17,7 +17,6 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.Response;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -191,7 +190,7 @@ public class DatadogLogsApiWriter {
 
         // get response
         int status = con.getResponseCode();
-        if (Response.Status.Family.familyOf(status) != Response.Status.Family.SUCCESSFUL) {
+        if (!isSuccessfulHttpStatus(status)) {
             InputStream stream = con.getErrorStream();
             String error = "";
             if (stream != null) {
@@ -204,6 +203,16 @@ public class DatadogLogsApiWriter {
         }
 
         log.trace("Received HTTP response {} {} with body {}", status, con.getResponseMessage(), getOutput(con.getInputStream()));
+    }
+
+    /**
+     * Check if the HTTP status code indicates success (2xx range)
+     * 
+     * @param statusCode HTTP status code to check
+     * @return true if status code is in the 2xx range (200-299)
+     */
+    private boolean isSuccessfulHttpStatus(int statusCode) {
+        return statusCode >= 200 && statusCode < 300;
     }
 
     private void setRequestProperties(HttpURLConnection con) {
