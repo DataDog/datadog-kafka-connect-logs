@@ -1,0 +1,20 @@
+{
+    "java.test.config": {
+        "vmargs": [
+            "-Djetty.port=8080"
+        ]
+    },
+    "java.test.defaultConfig": "default",
+    "java.test.config.default": {
+        "vmargs": [
+            "-Djetty.port=8080"
+        ]
+    },
+    "java.test.config.default.vmargs": [
+        "-Djetty.port=8080"
+    ],
+    "java.test.config.default.vmargs[0]": "-Djetty.port=8080",
+    "java.test.config.default.vmargs[1]": "-DfailIfNoTests=false",
+    "java.test.config.default.vmargs[2]": "-Dmaven.test.failure.ignore=true",
+    "java.configuration.updateBuildConfiguration": "automatic"
+} 
