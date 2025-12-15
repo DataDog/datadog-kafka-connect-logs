@@ -5,9 +5,9 @@
         "ghcr.io/devcontainers/features/java:1": {
             "version": "8",
             "installMaven": true
-        }
+        },
+        "ghcr.io/devcontainers/features/git:1": {}
     },
-    "postCreateCommand": "apt-get update && apt-get install -y git",
     "customizations": {
         "vscode": {
             "extensions": [
