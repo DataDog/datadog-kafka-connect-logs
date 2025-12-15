@@ -1,0 +1,27 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Maven Task (Debug)",
+            "type": "shell",
+            "command": "mvn",
+            "args": [
+                "test",
+                "-Dmaven.surefire.debug",
+            ],
+            "isBackground": true,
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^$",
+                    "file": 1,
+                    "location": 2,
+                    "message": 3
+                },
+                "background": {
+                    "beginsPattern": ".*",
+                    "endsPattern": ".*Listening.*"
+                }
+            }
+        }
+    ]
+}
