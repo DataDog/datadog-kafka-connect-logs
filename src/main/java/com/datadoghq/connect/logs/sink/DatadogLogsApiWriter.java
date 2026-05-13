@@ -7,7 +7,6 @@ package com.datadoghq.connect.logs.sink;
 
 import com.datadoghq.connect.logs.util.Project;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -17,7 +16,6 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.naming.SizeLimitExceededException;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -33,7 +31,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.zip.GZIPOutputStream;
 
@@ -42,7 +39,6 @@ import static java.util.stream.StreamSupport.stream;
 
 public class DatadogLogsApiWriter {
     public static final int MAXIMUM_BATCH_BYTES = 4500000;
-    public static final int MINIMUM_LIST_LENGTH = 0;
     public static final int MINIMUM_STRING_LENGTH = 0;
     public static final int TRUNCATE_DIVIDER = 2;
 
@@ -113,50 +109,63 @@ public class DatadogLogsApiWriter {
         List<SinkRecord> sinkRecords = batches.get(topic);
 
         List<String> serializedBatches = new ArrayList<>();
-        JsonArray currentBatch = new JsonArray();
+        StringBuilder currentBatch = new StringBuilder();
         int currentBatchSize = 2; // for '[' and ']' in JSON
+
+        currentBatch.append("[");
+        boolean first = true;
 
         for (SinkRecord record : sinkRecords) {
             if (record == null || record.value() == null) {
                 continue;
             }
 
-            UUID id = UUID.randomUUID();
             JsonElement recordJSON = recordToJSON(record);
             JsonObject message = populateMetadata(topic, recordJSON, record.timestamp(), () -> kafkaHeadersToJsonElement(record));
 
             // Serialize only the new message
             String messageString = message.toString();
-            int messageSizeBytes = messageString.getBytes(StandardCharsets.UTF_8).length;
+            int messageSize = messageString.length();
 
             // Estimate additional bytes including the extra byte for comma if batch is not empty
-            int additionalBytes = messageSizeBytes + (!currentBatch.isEmpty() ? 1 : 0);
+            int additionalBytes = messageSize + (!first ? 1 : 0);
             int totalBatchSize = currentBatchSize + additionalBytes;
 
             // If adding this message would exceed the max batch size
             if (totalBatchSize >= MAXIMUM_BATCH_BYTES) {
-                log.warn("Splitting batch because of size limits. Bytes of batch after new message was added: " + totalBatchSize + " id: " + id);
-                if (!currentBatch.isEmpty()) {
-                    // Serialize current batch once and store
+                log.warn("Splitting batch because of size limits. Bytes of batch after new message was added: " + totalBatchSize);
+
+                if (!first) {
+                    currentBatch.append("]");
                     serializedBatches.add(currentBatch.toString());
                 } else {
-                    log.error(String.format("Single message exceeds JSON size limit. " +
-                            "Truncated message: %s, id: %s", messageString.substring(MINIMUM_STRING_LENGTH, messageString.length() / TRUNCATE_DIVIDER), id));
-                    continue; // skip this oversized message
+                    log.error(String.format(
+                            "Single message exceeds JSON size limit. Truncated message: %s",
+                            messageString.substring(MINIMUM_STRING_LENGTH, messageString.length() / TRUNCATE_DIVIDER)
+                    ));
+                    continue;
                 }
 
-                // Start new batch
-                currentBatch = new JsonArray();
-                currentBatchSize = 2; // reset for new batch
+                // reset (Start new batch)
+                currentBatch = new StringBuilder();
+                currentBatch.append("[");
+                currentBatchSize = 2;
+                first = true;
+            }
+
+            if (!first) {
+                currentBatch.append(",");
             }
 
             // Add the message to the current batch
-            currentBatch.add(message);
+            currentBatch.append(messageString);
             currentBatchSize += additionalBytes;
+            first = false;
         }
 
         // Add the last batch if it has messages
-        if (!currentBatch.isEmpty()) {
+        if (!first) {
+            currentBatch.append("]");
             serializedBatches.add(currentBatch.toString());
         }
 
@@ -233,17 +242,15 @@ public class DatadogLogsApiWriter {
         int status = con.getResponseCode();
         if (!isSuccessfulHttpStatus(status)) {
             InputStream stream = con.getErrorStream();
-            UUID payloadErrorId = UUID.randomUUID();
             String error = "";
             if (stream != null) {
                 error = getOutput(stream);
             }
 
             con.disconnect();
-            log.error(String.format("Data content for error id: %s, content: %s", payloadErrorId, con.getContent()));
+            log.error(String.format("Http request failed with status: %s", status));
             throw new IOException("HTTP Response code: " + status
-                    + ", " + con.getResponseMessage() + ", " + error
-                    + " Error Id: " + payloadErrorId);
+                    + ", " + con.getResponseMessage() + ", " + error);
         }
 
         log.trace("Received HTTP response {} {} with body {}", status, con.getResponseMessage(), getOutput(con.getInputStream()));
