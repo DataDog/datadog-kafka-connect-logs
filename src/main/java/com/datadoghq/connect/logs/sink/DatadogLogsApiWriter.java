@@ -39,8 +39,6 @@ import static java.util.stream.StreamSupport.stream;
 
 public class DatadogLogsApiWriter {
     public static final int MAXIMUM_BATCH_BYTES = 4500000;
-    public static final int MINIMUM_STRING_LENGTH = 0;
-    public static final int TRUNCATE_DIVIDER = 2;
 
     private static final Logger log = LoggerFactory.getLogger(DatadogLogsApiWriter.class);
     private final DatadogLogsSinkConnectorConfig config;
@@ -123,9 +121,8 @@ public class DatadogLogsApiWriter {
             JsonElement recordJSON = recordToJSON(record);
             JsonObject message = populateMetadata(topic, recordJSON, record.timestamp(), () -> kafkaHeadersToJsonElement(record));
 
-            // Serialize only the new message
             String messageString = message.toString();
-            int messageSize = messageString.length();
+            int messageSize = utf8ByteLength(messageString);
 
             // Estimate additional bytes including the extra byte for comma if batch is not empty
             int additionalBytes = messageSize + (!first ? 1 : 0);
@@ -133,16 +130,15 @@ public class DatadogLogsApiWriter {
 
             // If adding this message would exceed the max batch size
             if (totalBatchSize >= MAXIMUM_BATCH_BYTES) {
-                log.warn("Splitting batch because of size limits. Bytes of batch after new message was added: " + totalBatchSize);
+                log.debug("Splitting batch because of size limits. Bytes of batch after new message was added: {}", totalBatchSize);
 
                 if (!first) {
                     currentBatch.append("]");
                     serializedBatches.add(currentBatch.toString());
                 } else {
-                    log.error(String.format(
-                            "Single message exceeds JSON size limit. Truncated message: %s",
-                            messageString.substring(MINIMUM_STRING_LENGTH, messageString.length() / TRUNCATE_DIVIDER)
-                    ));
+                    log.error("Dropping message that exceeds batch size limit ({} bytes, limit {} bytes). Preview: {}",
+                            messageSize, MAXIMUM_BATCH_BYTES,
+                            messageString.substring(0, Math.min(messageString.length(), 500)));
                     continue;
                 }
 
@@ -170,6 +166,23 @@ public class DatadogLogsApiWriter {
         }
 
         return serializedBatches;
+    }
+
+    /**
+     * Returns the exact number of bytes required to encode {@code s} as UTF-8,
+     * without allocating a byte array. Uses arithmetic shifts to minimise
+     * branches per character (one branch only for surrogate pairs).
+     *
+     * @see <a href="https://www.rfc-editor.org/rfc/rfc3629">RFC 3629 — UTF-8</a>
+     */
+    static int utf8ByteLength(String s) {
+        int bytes = 0;
+        for (int i = 0, len = s.length(); i < len; i++) {
+            char c = s.charAt(i);
+            bytes += 1 + ((0x7F - c) >>> 31) + ((0x7FF - c) >>> 31);
+            if (Character.isHighSurrogate(c)) { bytes++; i++; }
+        }
+        return bytes;
     }
 
     private JsonElement kafkaHeadersToJsonElement(SinkRecord sinkRecord) {
