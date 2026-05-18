@@ -24,6 +24,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -242,5 +243,147 @@ public class DatadogLogsApiWriterTest {
         requestBodySetExpected.add("[{\"message\":\"someValue1\",\"ddsource\":\"kafka-connect\",\"kafkaheaders\":{},\"ddtags\":\"topic:someTopic\"}]");
         Assert.assertEquals(requestBodySetExpected, requestBodySetActual);
         props.remove(DatadogLogsSinkConnectorConfig.PARSE_RECORD_HEADERS);
+    }
+
+    // --- byte-size batch splitting tests ---
+
+    private String generatePayload(int targetBytes) {
+        StringBuilder sb = new StringBuilder();
+        while (sb.length() < targetBytes) {
+            sb.append("abcdefghij");
+        }
+        return sb.substring(0, targetBytes);
+    }
+
+    @Test
+    public void writer_byteSizeSplit_producesMultipleRequests() throws IOException {
+        DatadogLogsSinkConnectorConfig config = new DatadogLogsSinkConnectorConfig(false, 500, props);
+        DatadogLogsApiWriter writer = new DatadogLogsApiWriter(config);
+
+        String largePayload = generatePayload(2_000_000);
+        records.add(new SinkRecord("someTopic", 0, null, "key", null, largePayload, 0));
+        records.add(new SinkRecord("someTopic", 0, null, "key", null, largePayload, 1));
+        records.add(new SinkRecord("someTopic", 0, null, "key", null, largePayload, 2));
+        writer.write(records);
+
+        Assert.assertTrue("Expected multiple HTTP requests from byte-size splitting",
+                restHelper.getCapturedRequests().size() > 1);
+    }
+
+    @Test
+    public void writer_byteSizeSplit_eachBatchIsValidJson() throws IOException {
+        DatadogLogsSinkConnectorConfig config = new DatadogLogsSinkConnectorConfig(false, 500, props);
+        DatadogLogsApiWriter writer = new DatadogLogsApiWriter(config);
+
+        String largePayload = generatePayload(2_000_000);
+        records.add(new SinkRecord("someTopic", 0, null, "key", null, largePayload, 0));
+        records.add(new SinkRecord("someTopic", 0, null, "key", null, largePayload, 1));
+        records.add(new SinkRecord("someTopic", 0, null, "key", null, largePayload, 2));
+        writer.write(records);
+
+        com.google.gson.JsonParser parser = new com.google.gson.JsonParser();
+        for (RequestInfo req : restHelper.getCapturedRequests()) {
+            com.google.gson.JsonElement parsed = parser.parse(req.getBody());
+            Assert.assertTrue("Batch must be a JSON array", parsed.isJsonArray());
+            Assert.assertTrue("Batch must not be empty", parsed.getAsJsonArray().size() > 0);
+        }
+    }
+
+    @Test
+    public void writer_byteSizeSplit_exactlyTwoBatchesAtBoundary() throws IOException {
+        DatadogLogsSinkConnectorConfig config = new DatadogLogsSinkConnectorConfig(false, 500, props);
+        DatadogLogsApiWriter writer = new DatadogLogsApiWriter(config);
+
+        int perMessageTarget = DatadogLogsApiWriter.MAXIMUM_BATCH_BYTES / 2 - 100;
+        String payload = generatePayload(perMessageTarget);
+        records.add(new SinkRecord("someTopic", 0, null, "key", null, payload, 0));
+        records.add(new SinkRecord("someTopic", 0, null, "key", null, payload, 1));
+        records.add(new SinkRecord("someTopic", 0, null, "key", null, payload, 2));
+        writer.write(records);
+
+        Assert.assertEquals("Two messages fit in one batch, third forces a second",
+                2, restHelper.getCapturedRequests().size());
+    }
+
+    @Test
+    public void writer_oversizedSingleMessage_isDroppedButOthersSent() throws IOException {
+        DatadogLogsSinkConnectorConfig config = new DatadogLogsSinkConnectorConfig(false, 500, props);
+        DatadogLogsApiWriter writer = new DatadogLogsApiWriter(config);
+
+        String oversized = generatePayload(DatadogLogsApiWriter.MAXIMUM_BATCH_BYTES + 1000);
+        records.add(new SinkRecord("someTopic", 0, null, "key", null, oversized, 0));
+        records.add(new SinkRecord("someTopic", 0, null, "key", null, "normalMessage", 1));
+        writer.write(records);
+
+        Assert.assertEquals("One request for the normal message", 1, restHelper.getCapturedRequests().size());
+        Assert.assertTrue("Normal message should be present",
+                restHelper.getCapturedRequests().get(0).getBody().contains("normalMessage"));
+    }
+
+    @Test
+    public void writer_nullValueRecords_dontCorruptBatch() throws IOException {
+        DatadogLogsSinkConnectorConfig config = new DatadogLogsSinkConnectorConfig(false, 500, props);
+        DatadogLogsApiWriter writer = new DatadogLogsApiWriter(config);
+
+        records.add(new SinkRecord("someTopic", 0, null, "key", null, "valid1", 0));
+        records.add(new SinkRecord("someTopic", 0, null, "key", null, null, 1));
+        records.add(new SinkRecord("someTopic", 0, null, "key", null, "valid2", 2));
+        writer.write(records);
+
+        Assert.assertEquals(1, restHelper.getCapturedRequests().size());
+        String body = restHelper.getCapturedRequests().get(0).getBody();
+        com.google.gson.JsonElement parsed = new com.google.gson.JsonParser().parse(body);
+        Assert.assertTrue(parsed.isJsonArray());
+        Assert.assertEquals("Only non-null-value records in batch", 2, parsed.getAsJsonArray().size());
+    }
+
+    @Test
+    public void writer_cjkPayload_splitsOnByteCountNotCharCount() throws IOException {
+        DatadogLogsSinkConnectorConfig config = new DatadogLogsSinkConnectorConfig(false, 500, props);
+        DatadogLogsApiWriter writer = new DatadogLogsApiWriter(config);
+
+        // CJK chars: 1 char = 3 UTF-8 bytes.
+        // At 1M chars: .length() = 1M, utf8 bytes ≈ 3M.
+        // Each serialized message ≈ 3M bytes (fits in one batch alone).
+        // Two together ≈ 6M bytes (exceeds 4.5M, must split).
+        // But by .length(), two messages ≈ 2M chars (would NOT split).
+        int charCount = 1_000_000;
+        StringBuilder sb = new StringBuilder(charCount);
+        for (int i = 0; i < charCount; i++) {
+            sb.append('\u4e16'); // 世 — 3 bytes in UTF-8
+        }
+        String cjkPayload = sb.toString();
+
+        Assert.assertEquals("Payload char length", charCount, cjkPayload.length());
+        Assert.assertEquals("Payload byte length is 3x char length",
+                charCount * 3, DatadogLogsApiWriter.utf8ByteLength(cjkPayload));
+
+        records.add(new SinkRecord("someTopic", 0, null, "key", null, cjkPayload, 0));
+        records.add(new SinkRecord("someTopic", 0, null, "key", null, cjkPayload, 1));
+        writer.write(records);
+
+        Assert.assertEquals("CJK messages must split despite fitting by char count",
+                2, restHelper.getCapturedRequests().size());
+    }
+
+    // --- utf8ByteLength tests ---
+
+    @Test
+    public void utf8ByteLength_ascii_matchesGetBytes() {
+        String ascii = "Hello, world! 1234567890";
+        Assert.assertEquals(ascii.getBytes(StandardCharsets.UTF_8).length,
+                DatadogLogsApiWriter.utf8ByteLength(ascii));
+    }
+
+    @Test
+    public void utf8ByteLength_multibyte_matchesGetBytes() {
+        String mixed = "Hello \u00e9\u00fc\u00f1 \u4e16\u754c \uD83D\uDE00";
+        Assert.assertEquals(mixed.getBytes(StandardCharsets.UTF_8).length,
+                DatadogLogsApiWriter.utf8ByteLength(mixed));
+    }
+
+    @Test
+    public void utf8ByteLength_empty_returnsZero() {
+        Assert.assertEquals(0, DatadogLogsApiWriter.utf8ByteLength(""));
     }
 }
