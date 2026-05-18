@@ -7,7 +7,6 @@ package com.datadoghq.connect.logs.sink;
 
 import com.datadoghq.connect.logs.util.Project;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -39,6 +38,10 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
 
 public class DatadogLogsApiWriter {
+    public static final int MAXIMUM_BATCH_BYTES = 4500000;
+    public static final int MINIMUM_STRING_LENGTH = 0;
+    public static final int TRUNCATE_DIVIDER = 2;
+
     private static final Logger log = LoggerFactory.getLogger(DatadogLogsApiWriter.class);
     private final DatadogLogsSinkConnectorConfig config;
     private final Map<String, List<SinkRecord>> batches;
@@ -89,36 +92,84 @@ public class DatadogLogsApiWriter {
     }
 
     private void sendBatch(String topic) throws IOException {
-        JsonArray content = formatBatch(topic);
-        if (content.isEmpty()) {
+        List<String> contentList = formatBatch(topic);
+        if (contentList.isEmpty()) {
             log.debug("Nothing to send; Skipping the HTTP request.");
             return;
         }
 
         URL url = config.getURL();
 
-        sendRequest(content, url);
+        for (String content: contentList) {
+            sendRequest(content, url);
+        }
     }
 
-    private JsonArray formatBatch(String topic) {
+    private List<String> formatBatch(String topic) {
         List<SinkRecord> sinkRecords = batches.get(topic);
-        JsonArray batchRecords = new JsonArray();
+
+        List<String> serializedBatches = new ArrayList<>();
+        StringBuilder currentBatch = new StringBuilder();
+        int currentBatchSize = 2; // for '[' and ']' in JSON
+
+        currentBatch.append("[");
+        boolean first = true;
 
         for (SinkRecord record : sinkRecords) {
-            if (record == null) {
-                continue;
-            }
-
-            if (record.value() == null) {
+            if (record == null || record.value() == null) {
                 continue;
             }
 
             JsonElement recordJSON = recordToJSON(record);
             JsonObject message = populateMetadata(topic, recordJSON, record.timestamp(), () -> kafkaHeadersToJsonElement(record));
-            batchRecords.add(message);
+
+            // Serialize only the new message
+            String messageString = message.toString();
+            int messageSize = messageString.length();
+
+            // Estimate additional bytes including the extra byte for comma if batch is not empty
+            int additionalBytes = messageSize + (!first ? 1 : 0);
+            int totalBatchSize = currentBatchSize + additionalBytes;
+
+            // If adding this message would exceed the max batch size
+            if (totalBatchSize >= MAXIMUM_BATCH_BYTES) {
+                log.warn("Splitting batch because of size limits. Bytes of batch after new message was added: " + totalBatchSize);
+
+                if (!first) {
+                    currentBatch.append("]");
+                    serializedBatches.add(currentBatch.toString());
+                } else {
+                    log.error(String.format(
+                            "Single message exceeds JSON size limit. Truncated message: %s",
+                            messageString.substring(MINIMUM_STRING_LENGTH, messageString.length() / TRUNCATE_DIVIDER)
+                    ));
+                    continue;
+                }
+
+                // reset (Start new batch)
+                currentBatch = new StringBuilder();
+                currentBatch.append("[");
+                currentBatchSize = 2;
+                first = true;
+            }
+
+            if (!first) {
+                currentBatch.append(",");
+            }
+
+            // Add the message to the current batch
+            currentBatch.append(messageString);
+            currentBatchSize += additionalBytes;
+            first = false;
         }
 
-        return batchRecords;
+        // Add the last batch if it has messages
+        if (!first) {
+            currentBatch.append("]");
+            serializedBatches.add(currentBatch.toString());
+        }
+
+        return serializedBatches;
     }
 
     private JsonElement kafkaHeadersToJsonElement(SinkRecord sinkRecord) {
@@ -167,8 +218,7 @@ public class DatadogLogsApiWriter {
         return content;
     }
 
-    private void sendRequest(JsonArray content, URL url) throws IOException {
-        String requestContent = content.toString();
+    private void sendRequest(String requestContent, URL url) throws IOException {
         byte[] compressedPayload = compress(requestContent);
 
         HttpURLConnection con;
@@ -196,10 +246,11 @@ public class DatadogLogsApiWriter {
             if (stream != null) {
                 error = getOutput(stream);
             }
+
             con.disconnect();
+            log.error(String.format("Http request failed with status: %s", status));
             throw new IOException("HTTP Response code: " + status
-                    + ", " + con.getResponseMessage() + ", " + error
-                    + ", Submitted payload: " + content);
+                    + ", " + con.getResponseMessage() + ", " + error);
         }
 
         log.trace("Received HTTP response {} {} with body {}", status, con.getResponseMessage(), getOutput(con.getInputStream()));
