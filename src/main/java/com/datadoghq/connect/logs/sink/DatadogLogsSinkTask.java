@@ -14,6 +14,7 @@ import org.apache.kafka.connect.sink.SinkTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
@@ -39,6 +40,13 @@ public class DatadogLogsSinkTask extends SinkTask {
     }
 
     protected void initWriter() {
+        if (writer != null) {
+            try {
+                writer.close();
+            } catch (IOException e) {
+                log.warn("Error closing previous HTTP client before reinitialising writer", e);
+            }
+        }
         writer = new DatadogLogsApiWriter(config);
     }
 
@@ -101,6 +109,13 @@ public class DatadogLogsSinkTask extends SinkTask {
     @Override
     public void stop() {
         log.info("Stopping task with config={}", config);
+        if (writer != null) {
+            try {
+                writer.close();
+            } catch (IOException e) {
+                log.warn("Error closing HTTP client during stop", e);
+            }
+        }
     }
 
     @Override
