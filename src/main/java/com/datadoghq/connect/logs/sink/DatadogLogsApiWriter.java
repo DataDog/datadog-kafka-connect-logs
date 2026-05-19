@@ -15,7 +15,6 @@ import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
@@ -46,17 +45,12 @@ import static java.util.stream.StreamSupport.stream;
 public class DatadogLogsApiWriter implements Closeable {
     public static final int MAXIMUM_BATCH_BYTES = 4500000;
 
-    /** Maximum total connections in the pool (shared across all routes). */
-    private static final int MAX_CONN_TOTAL = 50;
-
-    /** Maximum connections per route (there is only one route: the Datadog intake). */
-    private static final int MAX_CONN_PER_ROUTE = 50;
-
-    /** Connection-establishment timeout (milliseconds). */
+    // Matches the Datadog Agent's logs_config.http_timeout default (10s), which is the total
+    // budget that the Agent applies to the connect + write + read cycle of each intake request.
+    // Apache HttpClient 5's defaults (connect=3min, response=null/infinite) would let a stuck
+    // intake hang the connector indefinitely, so we set both legs explicitly.
     private static final int CONNECT_TIMEOUT_MS = 10_000;
-
-    /** Socket / response timeout (milliseconds). */
-    private static final int RESPONSE_TIMEOUT_MS = 30_000;
+    private static final int RESPONSE_TIMEOUT_MS = 10_000;
 
     private static final Logger log = LoggerFactory.getLogger(DatadogLogsApiWriter.class);
     private final DatadogLogsSinkConnectorConfig config;
@@ -78,17 +72,12 @@ public class DatadogLogsApiWriter implements Closeable {
     }
 
     private static CloseableHttpClient buildHttpClient(DatadogLogsSinkConnectorConfig config) {
-        PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
-        connManager.setMaxTotal(MAX_CONN_TOTAL);
-        connManager.setDefaultMaxPerRoute(MAX_CONN_PER_ROUTE);
-
         RequestConfig requestConfig = RequestConfig.custom()
                 .setConnectTimeout(CONNECT_TIMEOUT_MS, TimeUnit.MILLISECONDS)
                 .setResponseTimeout(RESPONSE_TIMEOUT_MS, TimeUnit.MILLISECONDS)
                 .build();
 
         HttpClientBuilder builder = HttpClients.custom()
-                .setConnectionManager(connManager)
                 .setDefaultRequestConfig(requestConfig)
                 // Disable automatic decompression: we send gzip, not receive it.
                 .disableContentCompression()
