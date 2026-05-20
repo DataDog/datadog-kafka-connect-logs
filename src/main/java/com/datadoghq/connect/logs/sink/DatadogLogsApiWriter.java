@@ -286,46 +286,33 @@ public class DatadogLogsApiWriter implements Closeable {
 
         log.trace("Submitting HTTP request to {} with body {}", urlString, requestContent);
 
-        final IOException[] sendError = {null};
         httpClient.execute(request, response -> {
             int status = response.getCode();
             if (!isSuccessfulHttpStatus(status)) {
                 String error = "";
                 if (response.getEntity() != null) {
                     try {
-                        ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
-                        byte[] buf = new byte[1024];
-                        java.io.InputStream errorStream = response.getEntity().getContent();
-                        int len;
-                        while ((len = errorStream.read(buf)) != -1) {
-                            errorOutput.write(buf, 0, len);
-                        }
-                        error = errorOutput.toString(StandardCharsets.UTF_8.name());
-                    } catch (IOException ignored) {
+                        error = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+                    } catch (IOException | ParseException ignored) {
                         // best-effort error body read
                     }
                 }
                 log.error("Http request failed with status: {}", status);
-                sendError[0] = new IOException("HTTP Response code: " + status
+                throw new IOException("HTTP Response code: " + status
                         + ", " + response.getReasonPhrase() + ", " + error);
-            } else {
-                String body = "";
-                HttpEntity entity = response.getEntity();
-                if (entity != null) {
-                    try {
-                        body = EntityUtils.toString(entity, StandardCharsets.UTF_8);
-                    } catch (ParseException ignored) {
-                        // best-effort response body read
-                    }
-                }
-                log.trace("Received HTTP response {} {} with body {}", status, response.getReasonPhrase(), body);
             }
+            String body = "";
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                try {
+                    body = EntityUtils.toString(entity, StandardCharsets.UTF_8);
+                } catch (ParseException ignored) {
+                    // best-effort response body read
+                }
+            }
+            log.trace("Received HTTP response {} {} with body {}", status, response.getReasonPhrase(), body);
             return null;
         });
-
-        if (sendError[0] != null) {
-            throw sendError[0];
-        }
 
         log.trace("HTTP request submitted");
     }
