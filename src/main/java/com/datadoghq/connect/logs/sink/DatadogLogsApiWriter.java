@@ -301,16 +301,18 @@ public class DatadogLogsApiWriter implements Closeable {
                 throw new IOException("HTTP Response code: " + status
                         + ", " + response.getReasonPhrase() + ", " + error);
             }
-            String body = "";
-            HttpEntity entity = response.getEntity();
-            if (entity != null) {
-                try {
-                    body = EntityUtils.toString(entity, StandardCharsets.UTF_8);
-                } catch (ParseException ignored) {
-                    // best-effort response body read
+            if (log.isTraceEnabled()) {
+                String body = "";
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    try {
+                        body = EntityUtils.toString(entity, StandardCharsets.UTF_8);
+                    } catch (IOException | ParseException ignored) {
+                        // best-effort body read for trace logging
+                    }
                 }
+                log.trace("Received HTTP response {} {} with body {}", status, response.getReasonPhrase(), body);
             }
-            log.trace("Received HTTP response {} {} with body {}", status, response.getReasonPhrase(), body);
             return null;
         });
 
