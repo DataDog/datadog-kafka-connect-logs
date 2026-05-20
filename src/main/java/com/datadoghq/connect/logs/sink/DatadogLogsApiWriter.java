@@ -16,8 +16,11 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.ParseException;
 import org.apache.kafka.connect.header.Header;
 import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
@@ -306,7 +309,16 @@ public class DatadogLogsApiWriter implements Closeable {
                 sendError[0] = new IOException("HTTP Response code: " + status
                         + ", " + response.getReasonPhrase() + ", " + error);
             } else {
-                log.trace("Received HTTP response {} {}", status, response.getReasonPhrase());
+                String body = "";
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    try {
+                        body = EntityUtils.toString(entity, StandardCharsets.UTF_8);
+                    } catch (ParseException ignored) {
+                        // best-effort response body read
+                    }
+                }
+                log.trace("Received HTTP response {} {} with body {}", status, response.getReasonPhrase(), body);
             }
             return null;
         });
