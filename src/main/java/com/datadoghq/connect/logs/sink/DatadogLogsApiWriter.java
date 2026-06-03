@@ -10,6 +10,17 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.ParseException;
 import org.apache.kafka.connect.header.Header;
 import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.sink.SinkRecord;
@@ -17,12 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
+import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -31,19 +38,28 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.zip.GZIPOutputStream;
 
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
 
-public class DatadogLogsApiWriter {
+public class DatadogLogsApiWriter implements Closeable {
     public static final int MAXIMUM_BATCH_BYTES = 4500000;
+
+    // Matches the Datadog Agent's logs_config.http_timeout default (10s), which is the total
+    // budget that the Agent applies to the connect + write + read cycle of each intake request.
+    // Apache HttpClient 5's defaults (connect=3min, response=null/infinite) would let a stuck
+    // intake hang the connector indefinitely, so we set both legs explicitly.
+    private static final int CONNECT_TIMEOUT_MS = 10_000;
+    private static final int RESPONSE_TIMEOUT_MS = 10_000;
 
     private static final Logger log = LoggerFactory.getLogger(DatadogLogsApiWriter.class);
     private final DatadogLogsSinkConnectorConfig config;
     private final Map<String, List<SinkRecord>> batches;
     private final JsonConverter jsonConverter;
+    private final CloseableHttpClient httpClient;
 
     public DatadogLogsApiWriter(DatadogLogsSinkConnectorConfig config) {
         this.config = config;
@@ -53,8 +69,30 @@ public class DatadogLogsApiWriter {
         Map<String, String> jsonConverterConfig = new HashMap<>();
         jsonConverterConfig.put("schemas.enable", "false");
         jsonConverterConfig.put("decimal.format", "NUMERIC");
-
         jsonConverter.configure(jsonConverterConfig, false);
+
+        this.httpClient = buildHttpClient(config);
+    }
+
+    private static CloseableHttpClient buildHttpClient(DatadogLogsSinkConnectorConfig config) {
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectTimeout(CONNECT_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                .setResponseTimeout(RESPONSE_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                .build();
+
+        HttpClientBuilder builder = HttpClients.custom()
+                .setDefaultRequestConfig(requestConfig)
+                // Disable automatic decompression: we send gzip, not receive it.
+                .disableContentCompression()
+                // Disable automatic redirect following to keep behaviour identical to HttpURLConnection defaults.
+                .disableRedirectHandling();
+
+        if (config.proxyURL != null && !config.proxyURL.isEmpty()) {
+            HttpHost proxy = new HttpHost(config.proxyURL, config.proxyPort);
+            builder.setProxy(proxy);
+        }
+
+        return builder.build();
     }
 
     /**
@@ -234,58 +272,61 @@ public class DatadogLogsApiWriter {
     private void sendRequest(String requestContent, URL url) throws IOException {
         byte[] compressedPayload = compress(requestContent);
 
-        HttpURLConnection con;
-        if (config.proxyURL != null) {
-            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(config.proxyURL, config.proxyPort));
-            con = (HttpURLConnection) url.openConnection(proxy);
-        } else {
-            con = (HttpURLConnection) url.openConnection();
-        }
-        con.setDoOutput(true);
-        con.setRequestMethod("POST");
-        setRequestProperties(con);
+        String urlString = url.toString();
+        HttpPost request = new HttpPost(urlString);
 
-        log.trace("Submitting HTTP request to {} with body {}", con.getURL(), requestContent);
-        DataOutputStream output = new DataOutputStream(con.getOutputStream());
-        output.write(compressedPayload);
-        output.close();
-        log.trace("HTTP request submitted");
+        request.setHeader("Content-Type", "application/json");
+        request.setHeader("Content-Encoding", "gzip");
+        request.setHeader("DD-API-KEY", config.ddApiKey);
+        request.setHeader("DD-EVP-ORIGIN", Project.getName());
+        request.setHeader("DD-EVP-ORIGIN-VERSION", Project.getVersion());
+        request.setHeader("User-Agent", Project.getName() + "/" + Project.getVersion());
 
-        // get response
-        int status = con.getResponseCode();
-        if (!isSuccessfulHttpStatus(status)) {
-            InputStream stream = con.getErrorStream();
-            String error = "";
-            if (stream != null) {
-                error = getOutput(stream);
+        request.setEntity(new ByteArrayEntity(compressedPayload, ContentType.APPLICATION_JSON));
+
+        log.trace("Submitting HTTP request to {} with body {}", urlString, requestContent);
+
+        httpClient.execute(request, response -> {
+            int status = response.getCode();
+            if (!isSuccessfulHttpStatus(status)) {
+                String error = "";
+                if (response.getEntity() != null) {
+                    try {
+                        error = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+                    } catch (IOException | ParseException ignored) {
+                        // best-effort error body read
+                    }
+                }
+                log.error("Http request failed with status: {}", status);
+                throw new IOException("HTTP Response code: " + status
+                        + ", " + response.getReasonPhrase() + ", " + error);
             }
+            if (log.isTraceEnabled()) {
+                String body = "";
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    try {
+                        body = EntityUtils.toString(entity, StandardCharsets.UTF_8);
+                    } catch (IOException | ParseException ignored) {
+                        // best-effort body read for trace logging
+                    }
+                }
+                log.trace("Received HTTP response {} {} with body {}", status, response.getReasonPhrase(), body);
+            }
+            return null;
+        });
 
-            con.disconnect();
-            log.error(String.format("Http request failed with status: %s", status));
-            throw new IOException("HTTP Response code: " + status
-                    + ", " + con.getResponseMessage() + ", " + error);
-        }
-
-        log.trace("Received HTTP response {} {} with body {}", status, con.getResponseMessage(), getOutput(con.getInputStream()));
+        log.trace("HTTP request submitted");
     }
 
     /**
      * Check if the HTTP status code indicates success (2xx range)
-     * 
+     *
      * @param statusCode HTTP status code to check
      * @return true if status code is in the 2xx range (200-299)
      */
     private boolean isSuccessfulHttpStatus(int statusCode) {
         return statusCode >= 200 && statusCode < 300;
-    }
-
-    private void setRequestProperties(HttpURLConnection con) {
-        con.setRequestProperty("Content-Type", "application/json");
-        con.setRequestProperty("Content-Encoding", "gzip");
-        con.setRequestProperty("DD-API-KEY", config.ddApiKey);
-        con.setRequestProperty("DD-EVP-ORIGIN", Project.getName());
-        con.setRequestProperty("DD-EVP-ORIGIN-VERSION", Project.getVersion());
-        con.setRequestProperty("User-Agent", Project.getName() + "/" + Project.getVersion());
     }
 
     private byte[] compress(String str) throws IOException {
@@ -297,14 +338,8 @@ public class DatadogLogsApiWriter {
         return os.toByteArray();
     }
 
-    private String getOutput(InputStream input) throws IOException {
-        ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int length;
-        while ((length = input.read(buffer)) != -1) {
-            errorOutput.write(buffer, 0, length);
-        }
-
-        return errorOutput.toString(StandardCharsets.UTF_8.name());
+    @Override
+    public void close() throws IOException {
+        httpClient.close();
     }
 }
