@@ -11,8 +11,6 @@ Changelog
   character counts, preventing oversized payloads from being submitted.
 * Fixed a sink connector issue reported in
   [#59](https://github.com/DataDog/datadog-kafka-connect-logs/pull/59).
-* Migrated CI from CircleCI to GitHub Actions.
-* Added devcontainer support for local development.
 
 # 1.4.0 / 2025-08-11
 
