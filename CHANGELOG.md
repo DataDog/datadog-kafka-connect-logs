@@ -1,6 +1,26 @@
 Changelog
 =========
 
+# 1.5.0 / 2026-06-18
+
+### Changes
+
+* Replaced `HttpURLConnection` with Apache HttpClient 5.x for the Datadog logs
+  sink transport.
+* Fixed batch size tracking to use accurate UTF-8 byte counts rather than
+  character counts, preventing oversized payloads from being submitted.
+* Fixed a sink connector issue reported in
+  [#59](https://github.com/DataDog/datadog-kafka-connect-logs/pull/59).
+* Migrated CI from CircleCI to GitHub Actions.
+* Added devcontainer support for local development.
+
+# 1.4.0 / 2025-08-11
+
+### Changes
+
+* Added support for Confluent Platform 8.0.0 by removing the `javax` dependency
+  to maintain Kafka version interoperability.
+
 # 1.3.0 / 2024-05-24
 
 ### Changes
